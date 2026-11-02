@@ -1,0 +1,5 @@
+# Allow system_app to set hardware nav key properties
+set_prop(system_app, vendor_hwkey_prop)
+
+# SystemUI: allow BlackBerry touchpad toggle
+set_prop(system_app, vendor_touchkeypad_prop)

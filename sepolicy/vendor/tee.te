@@ -1,10 +1,11 @@
-typeattribute tee data_between_core_and_vendor_violators;
-
-# /data/goodix labeling
-type_transition tee system_data_file:{ dir file } gx_fpd_data_file;
-
-# allow storing goodix data
+# allow storing goodix persist data
 allow tee mnt_vendor_file:dir { search };
+allow tee vendor_persist_drm_file:dir create_dir_perms;
+allow tee vendor_persist_drm_file:file create_file_perms;
+
+# qseecomd accesses legacy /data/goodix/ for FP calibration + templates.
+# gx_fpd ignores the AIDL HAL's set_active_group path and writes
+# templates to /data/goodix/0/ (labelled system_data_file). Must be
+# allow, not dontaudit — dontaudit still blocks in enforcing.
 allow tee system_data_file:dir create_dir_perms;
-allow tee { persist_drm_file gx_fpd_data_file fingerprintd_data_file }:dir create_dir_perms;
-allow tee { persist_drm_file gx_fpd_data_file fingerprintd_data_file }:file create_file_perms;
+allow tee system_data_file:file create_file_perms;

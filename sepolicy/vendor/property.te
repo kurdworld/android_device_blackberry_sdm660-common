@@ -2,7 +2,7 @@
 vendor_public_prop(vendor_alarm_prop);
 
 # Camera
-vendor_public_prop(vendor_camera_prop);
+# athena-dup-removed: vendor_public_prop(vendor_camera_prop);
 
 # DPM
 vendor_internal_prop(vendor_dpm_prop)
@@ -13,11 +13,17 @@ vendor_internal_prop(vendor_fingerprint_prop);
 # bochenekk mods - hwkeys stuff
 vendor_internal_prop(vendor_hwkey_prop);
 
-# Touch keypad scrolling
-vendor_public_prop(vendor_touchkeypad_scrolling_prop);
-
-# Touch keypad hardware power
+# Touch keypad toggle
 vendor_public_prop(vendor_touchkeypad_prop);
 
-# FocalTech host-side DT2W compatibility mode
-vendor_public_prop(vendor_focaltech_host_dt2w_prop);
+# Touch keypad scrolling toggle
+vendor_public_prop(vendor_touchkeypad_scrolling_prop);
+
+# KEY2 CPU Boost QS
+vendor_public_prop(vendor_cpuboost_prop);
+
+# KEY2 BoomSound QS
+vendor_public_prop(vendor_boomsound_prop);
+
+# libperfmgr power HAL state
+vendor_internal_prop(vendor_power_prop)

@@ -2,11 +2,9 @@ dontaudit init { bt_firmware_file firmware_file }:filesystem getattr;
 
 allow init socket_device:sock_file { unlink setattr create };
 allow init vendor_data_file:file lock;
-allow init location_data_file:dir { search write add_name };
-allow init location_data_file:file { create write open getattr setattr };
 allow init hal_audio_default:binder call;
 allow init platform_app:binder call;
-allow init hal_perf_default:binder call;
+allow init vendor_hal_perf_default:binder call;
 allow init hal_graphics_composer_default:binder call;
 allow init same_process_hal_file:file execute;
 allow init servicemanager:binder { call transfer };
@@ -21,8 +19,12 @@ allow init hidl_base_hwservice:hwservice_manager add;
 allow init hwservicemanager:binder { call transfer };
 allow init ion_device:chr_file { ioctl open read };
 allow init sysfs:file { open setattr write };
-allow init sysfs_graphics:file { open write };
+allow init vendor_sysfs_graphics:file { open write };
 allow init tee_device:chr_file { ioctl open read write };
 allow init vendor_file:file { execute execute_no_trans };
 allow init vndbinder_device:chr_file { ioctl open read write };
 allow init vndservicemanager:binder { call transfer };
+
+# GPS location data
+allow init vendor_location_data_file:dir { search write add_name };
+allow init vendor_location_data_file:file { create write open getattr setattr };

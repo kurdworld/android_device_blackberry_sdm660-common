@@ -226,35 +226,29 @@ function configure_zram_parameters() {
     MemTotalStr=`cat /proc/meminfo | grep MemTotal`
     MemTotal=${MemTotalStr:16:8}
 
-    # Disable swap read-ahead for random ZRAM-backed anonymous-page faults.
-    # Read only the faulted page instead of an eight-page cluster.
-    echo 0 > /proc/sys/vm/page-cluster
-
-    # Allow a supported custom compressor to override the kernel default.
-    requested=$(getprop persist.vendor.key2.zram.compressor)
-    if [ -n "$requested" ] && \
-        grep -qw "$requested" /sys/block/zram0/comp_algorithm; then
-            echo "$requested" > /sys/block/zram0/comp_algorithm
-    fi
+    low_ram=`getprop ro.config.low_ram`
 
     # Zram disk - 75% for Go devices.
     # For 512MB Go device, size = 384MB, set same for Non-Go.
     # For 1GB Go device, size = 768MB, set same for Non-Go.
-    # For 2GB-3GB Non-Go device, size = 1GB
-    # For 3GB-5GB Non-Go device, size = 2GB (Key2 LE)
-    # For >=5GB Non-Go device, size = 2.5GB (Key2)
+    # For >=2GB Non-Go device, size = 1GB
+    # And enable lz4 zram compression for Go targets.
+
+    # lz4 gives the best speed/ratio trade-off on SDM660's A73/A53 cores
+    # (lzo is the kernel default, zstd is slower to (de)compress).
+    echo lz4 > /sys/block/zram0/comp_algorithm
+
     if [ -f /sys/block/zram0/disksize ]; then
         if [ $MemTotal -le 524288 ]; then
             echo 402653184 > /sys/block/zram0/disksize
         elif [ $MemTotal -le 1048576 ]; then
             echo 805306368 > /sys/block/zram0/disksize
         elif [ $MemTotal -le 3145728 ]; then
+            # Set Zram disk size=1GB for 1-3GB Non-Go targets.
             echo 1073741824 > /sys/block/zram0/disksize
-        elif [ $MemTotal -le 5242880 ]; then
-            echo 2147483648 > /sys/block/zram0/disksize
         else
-            # Set Zram disk size=2.5GB for >=5GB Non-Go targets.
-            echo 2684354560 > /sys/block/zram0/disksize
+            # Set Zram disk size=2GB for >3GB targets (Key2 has 6GB).
+            echo 2147483648 > /sys/block/zram0/disksize
         fi
         mkswap /dev/block/zram0
         swapon /dev/block/zram0 -p 32758
@@ -262,26 +256,15 @@ function configure_zram_parameters() {
 }
 
 function configure_read_ahead_kb_values() {
-    MemTotalStr=`cat /proc/meminfo | grep MemTotal`
-    MemTotal=${MemTotalStr:16:8}
-
-    # Set 128 for <= 3GB &
-    # set 512 for >= 4GB targets.
-    if [ $MemTotal -le 3145728 ]; then
-        echo 128 > /sys/block/mmcblk0/bdi/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0/queue/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
-        echo 128 > /sys/block/dm-0/queue/read_ahead_kb
-        echo 128 > /sys/block/dm-1/queue/read_ahead_kb
-    else
-        echo 512 > /sys/block/mmcblk0/bdi/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0/queue/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
-        echo 512 > /sys/block/dm-0/queue/read_ahead_kb
-        echo 512 > /sys/block/dm-1/queue/read_ahead_kb
-    fi
+    # Measured on the KEY2 (6GB): 128KB read-ahead with mq-deadline roughly halved Settings
+    # scroll jank versus 512KB read-ahead with bfq.
+    echo mq-deadline > /sys/block/mmcblk0/queue/scheduler
+    echo 128 > /sys/block/mmcblk0/bdi/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0/queue/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
+    echo 128 > /sys/block/dm-0/queue/read_ahead_kb
+    echo 128 > /sys/block/dm-1/queue/read_ahead_kb
 }
 
 function disable_core_ctl() {
@@ -428,9 +411,9 @@ else
     fi
 
     # Set allocstall_threshold to 0 for all targets.
-    # Set swappiness to 60 for all targets
+    # Set swappiness to 100 for all targets
     echo 0 > /sys/module/vmpressure/parameters/allocstall_threshold
-    echo 60 > /proc/sys/vm/swappiness
+    echo 100 > /proc/sys/vm/swappiness
 
     configure_zram_parameters
 
@@ -2356,26 +2339,20 @@ case "$target" in
         fi
 
         if [ $panel -gt 1080 ]; then
-            [ -w /proc/sys/kernel/sched_window_stats_policy ] &&
-                echo 2 > /proc/sys/kernel/sched_window_stats_policy
-            [ -w /proc/sys/kernel/sched_ravg_hist_size ] &&
-                echo 5 > /proc/sys/kernel/sched_ravg_hist_size
+            echo 2 > /proc/sys/kernel/sched_window_stats_policy
+            echo 5 > /proc/sys/kernel/sched_ravg_hist_size
         else
-            [ -w /proc/sys/kernel/sched_window_stats_policy ] &&
-                echo 3 > /proc/sys/kernel/sched_window_stats_policy
-            [ -w /proc/sys/kernel/sched_ravg_hist_size ] &&
-                echo 3 > /proc/sys/kernel/sched_ravg_hist_size
+            echo 3 > /proc/sys/kernel/sched_window_stats_policy
+            echo 3 > /proc/sys/kernel/sched_ravg_hist_size
         fi
         #Apply settings for sdm660, sdm636,sda636
         case "$soc_id" in
                 "317" | "324" | "325" | "326" | "345" | "346" )
 
-            # Increase core-control hysteresis to reduce hotplug churn.
-            echo 500 > /sys/devices/system/cpu/cpu0/core_ctl/offline_delay_ms
             echo 2 > /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
             echo 60 > /sys/devices/system/cpu/cpu4/core_ctl/busy_up_thres
             echo 30 > /sys/devices/system/cpu/cpu4/core_ctl/busy_down_thres
-            echo 500 > /sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms
+            echo 100 > /sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms
             echo 1 > /sys/devices/system/cpu/cpu4/core_ctl/is_big_cluster
             echo 4 > /sys/devices/system/cpu/cpu4/core_ctl/task_thres
 
@@ -2384,14 +2361,6 @@ case "$target" in
             echo 90 > /proc/sys/kernel/sched_downmigrate
             echo 140 > /proc/sys/kernel/sched_group_upmigrate
             echo 120 > /proc/sys/kernel/sched_group_downmigrate
-            echo 0 > /proc/sys/kernel/sched_select_prev_cpu_us
-            echo 400000 > /proc/sys/kernel/sched_freq_inc_notify
-            echo 400000 > /proc/sys/kernel/sched_freq_dec_notify
-            echo 5 > /proc/sys/kernel/sched_spill_nr_run
-            echo 1 > /proc/sys/kernel/sched_restrict_cluster_spill
-            echo 100000 > /proc/sys/kernel/sched_short_burst_ns
-            echo 1 > /proc/sys/kernel/sched_prefer_sync_wakee_to_waker
-            echo 20 > /proc/sys/kernel/sched_small_wakee_task_load
 
             # cpuset settings
             echo 0-3 > /dev/cpuset/background/cpus
@@ -2400,31 +2369,80 @@ case "$target" in
             # disable thermal bcl hotplug to switch governor
             echo 0 > /sys/module/msm_thermal/core_control/enabled
 
-            # Bring the policy CPUs online before changing their governors.
+            # online CPU0 and CPU4 before touching governors
             echo 1 > /sys/devices/system/cpu/cpu0/online
             echo 1 > /sys/devices/system/cpu/cpu4/online
 
-            # Kernel 4.19 does not provide the interactive governor. Use the
-            # per-policy schedutil nodes shared by Athena and Luna instead.
-            policy0=/sys/devices/system/cpu/cpufreq/policy0
-            echo "schedutil" > $policy0/scaling_governor
-            echo 1000 > $policy0/schedutil/up_rate_limit_us
-            echo 3000 > $policy0/schedutil/down_rate_limit_us
-            echo 1401600 > $policy0/schedutil/hispeed_freq
-            echo 85 > $policy0/schedutil/hispeed_load
-            echo 0 > $policy0/schedutil/pl
-            echo 902400 > $policy0/schedutil/rtg_boost_freq
-            echo 633600 > $policy0/scaling_min_freq
+            # Kernel version detect (schedutil sysfs layout changed in 4.19)
+            KernelVersionStr=`cat /proc/sys/kernel/osrelease`
+            KernelVersionS=${KernelVersionStr:2:2}
+            KernelVersionA=${KernelVersionStr:0:1}
+            KernelVersionB=${KernelVersionS%.*}
 
-            policy4=/sys/devices/system/cpu/cpufreq/policy4
-            echo "schedutil" > $policy4/scaling_governor
-            echo 1000 > $policy4/schedutil/up_rate_limit_us
-            echo 3000 > $policy4/schedutil/down_rate_limit_us
-            echo 1401600 > $policy4/schedutil/hispeed_freq
-            echo 85 > $policy4/schedutil/hispeed_load
-            echo 0 > $policy4/schedutil/pl
-            echo 0 > $policy4/schedutil/rtg_boost_freq
-            echo 1113600 > $policy4/scaling_min_freq
+            if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                # 4.19+: write to per-policy nodes (Sony Nile style)
+                # little cluster
+                echo "schedutil" > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us
+                echo 1401600 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/hispeed_freq
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/pl
+                echo 633600 > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq
+                echo 902400 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/rtg_boost_freq
+
+                # big cluster
+                echo "schedutil" > /sys/devices/system/cpu/cpufreq/policy4/scaling_governor
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us
+                echo 1401600 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/hispeed_freq
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/pl
+                echo 1113600 > /sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq
+                echo 0 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/rtg_boost_freq
+            else
+                # Pre-4.19 fallback: per-cpu path
+                echo "schedutil" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+                echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/up_rate_limit_us
+                echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/down_rate_limit_us
+                echo 1401600 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/hispeed_freq
+
+                echo "schedutil" > /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor
+                echo 0 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/up_rate_limit_us
+                echo 0 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/down_rate_limit_us
+                echo 1401600 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/hispeed_freq
+            fi
+
+            echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
+
+            # Input touch-boost (path moved in 4.19)
+            if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                echo "0:1401600" > /sys/devices/system/cpu/cpu_boost/input_boost_freq
+                echo 40 > /sys/devices/system/cpu/cpu_boost/input_boost_ms
+            else
+                echo "0:1401600" > /sys/module/cpu_boost/parameters/input_boost_freq
+                echo 40 > /sys/module/cpu_boost/parameters/input_boost_ms
+            fi
+
+            # sched_load_boost: 0 = neutral. Sony Nile uses -6 (bias to little
+            # cluster for battery) but on this kernel it suppresses up-migration
+            # to the big cluster under camera/heavy loads -> visible lag.
+            echo 0 > /sys/devices/system/cpu/cpu0/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu1/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu2/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu3/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu4/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu5/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu6/sched_load_boost
+            echo 0 > /sys/devices/system/cpu/cpu7/sched_load_boost
+
+            if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                echo 85 > /sys/devices/system/cpu/cpufreq/policy0/schedutil/hispeed_load
+                echo 85 > /sys/devices/system/cpu/cpufreq/policy4/schedutil/hispeed_load
+                # memlat settings moved to target-specific file in 4.19
+                setprop vendor.dcvs.prop 1
+            else
+                echo 85 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/hispeed_load
+                echo 85 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/hispeed_load
+            fi
 
             # bring all cores online
             echo 1 > /sys/devices/system/cpu/cpu0/online
@@ -2436,19 +2454,21 @@ case "$target" in
             echo 1 > /sys/devices/system/cpu/cpu6/online
             echo 1 > /sys/devices/system/cpu/cpu7/online
 
-            # configure LPM - enable retention for power savings 
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled
+            # configure LPM - disable retention (matches all sdm660 refs:
+            # whyred, x00td, sony-nile). Retention causes 1s+ wake latency
+            # that stalls GPU buffer dequeue on unlock.
+            echo N > /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled
             # enable LPM
             echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled
 
@@ -2457,10 +2477,16 @@ case "$target" in
 
             # Set Memory parameters
             configure_memory_parameters
+			
+			# lazy
+            # zram swap is random access: no readahead clustering, swap eagerly
+            echo 100 > /proc/sys/vm/swappiness
+            echo 0 > /proc/sys/vm/page-cluster
+            echo 50 > /proc/sys/vm/vfs_cache_pressure
 
-            # Enable bus-dcvs using the kernel 4.19 devfreq node.
-            cpubw=/sys/class/devfreq/soc:qcom,cpu-cpu-ddr-bw
-            if [ -d "$cpubw" ]; then
+            # Enable bus-dcvs
+            for cpubw in /sys/class/devfreq/*qcom,cpubw*
+            do
                 echo "bw_hwmon" > $cpubw/governor
                 echo 50 > $cpubw/polling_interval
                 echo 762 > $cpubw/min_freq
@@ -2472,25 +2498,21 @@ case "$target" in
                 echo 20 > $cpubw/bw_hwmon/hist_memory
                 echo 0 > $cpubw/bw_hwmon/hyst_length
                 echo 80 > $cpubw/bw_hwmon/down_thres
+                echo 0 > $cpubw/bw_hwmon/low_power_ceil_mbps
+                echo 34 > $cpubw/bw_hwmon/low_power_io_percent
+                echo 20 > $cpubw/bw_hwmon/low_power_delay
                 echo 0 > $cpubw/bw_hwmon/guard_band_mbps
                 echo 250 > $cpubw/bw_hwmon/up_scale
                 echo 1600 > $cpubw/bw_hwmon/idle_mbps
-            fi
+            done
 
-            for memlat in /sys/class/devfreq/soc:qcom,cpu*-cpu-ddr-lat
+            for memlat in /sys/class/devfreq/*qcom,memlat-cpu*
             do
-                [ -d "$memlat" ] || continue
                 echo "mem_latency" > $memlat/governor
                 echo 10 > $memlat/polling_interval
                 echo 400 > $memlat/mem_latency/ratio_ceil
             done
-
-            for latfloor in /sys/class/devfreq/soc:qcom,cpu*-cpu-ddr-latfloor
-            do
-                [ -d "$latfloor" ] || continue
-                echo "compute" > $latfloor/governor
-                echo 10 > $latfloor/polling_interval
-            done
+            echo "cpufreq" > /sys/class/devfreq/soc:qcom,mincpubw/governor
 
             # Start cdsprpcd only for sdm660 and disable for sdm630 and sdm636
             case "$soc_id" in
@@ -4234,17 +4256,3 @@ esac
 misc_link=$(ls -l /dev/block/bootdevice/by-name/misc)
 real_path=${misc_link##*>}
 setprop persist.vendor.mmi.misc_dev_path $real_path
-
-# Charger mode runs this same oneshot service. Apply the low-power override
-# last so target-specific post-boot tuning cannot overwrite it.
-if [ "$(getprop ro.bootmode)" = "charger" ]; then
-    for policy in policy0 policy4; do
-        governor=/sys/devices/system/cpu/cpufreq/$policy/scaling_governor
-        [ -w "$governor" ] && echo powersave > "$governor"
-    done
-
-    for cpu in 1 2 3 4 5 6 7; do
-        online=/sys/devices/system/cpu/cpu${cpu}/online
-        [ -w "$online" ] && echo 0 > "$online"
-    done
-fi

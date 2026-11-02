@@ -4,13 +4,20 @@ allow system_server sysfs_msm_subsys:file r_file_perms;
 get_prop(system_server, exported_camera_prop);
 get_prop(system_server, userspace_reboot_config_prop)
 get_prop(system_server, userspace_reboot_exported_prop)
-get_prop(qtidataservices_app, vendor_dpm_prop)
+get_prop(system_server, vendor_alarm_prop)
+get_prop(vendor_qtidataservices_app, vendor_dpm_prop)
+
+# DisplayManager reads MSM ext-disp cable state for HDMI/DP hotplug detection
+allow system_server sysfs_extcon:file r_file_perms;
 
 allow system_server zygote:process { getpgid };
 allow system_server app_zygote:process { getpgid };
-allow system_server sysfs_kgsl:lnk_file { read };
+allow system_server vendor_sysfs_kgsl:lnk_file { read };
 allow system_server sysfs_virtualkeys:file r_file_perms;
 allow system_server media_rw_data_file:dir { setattr };
 allow system_server sysfs_livedisplay_tuneable:file { read write };
 allow system_server hal_audio_default:binder { call transfer };
 allow system_server init:binder call;
+
+# ViewRootImpl in system_server windows reads the keyboard scrolling toggle
+get_prop(system_server, vendor_touchkeypad_scrolling_prop)

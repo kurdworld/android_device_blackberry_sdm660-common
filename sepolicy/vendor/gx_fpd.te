@@ -6,16 +6,19 @@ init_daemon_domain(gx_fpd)
 
 # Allow Binder communication
 vndbinder_use(gx_fpd)
+hwbinder_use(gx_fpd)
 binder_call(gx_fpd, hal_fingerprint_default)
+
+# HIDL service registration
+allow gx_fpd hidl_base_hwservice:hwservice_manager add;
+allow gx_fpd hal_fingerprint_hwservice:hwservice_manager add;
 
 # Add services
 add_service(gx_fpd, gx_fpd_service)
 
-typeattribute gx_fpd data_between_core_and_vendor_violators;
-
-# Allow storing goodix data
-allow gx_fpd { persist_drm_file gx_fpd_data_file }:dir create_dir_perms;
-allow gx_fpd { persist_drm_file gx_fpd_data_file }:file create_file_perms;
+# Allow storing goodix persist data
+allow gx_fpd vendor_persist_drm_file:dir create_dir_perms;
+allow gx_fpd vendor_persist_drm_file:file create_file_perms;
 
 # Allow access to goodix device
 allow gx_fpd gx_fpd_device:chr_file rw_file_perms;
@@ -50,9 +53,3 @@ dontaudit gx_fpd default_prop:property_service set;
 
 # ... and for whatever reason trying to call random stuff
 dontaudit gx_fpd hwservicemanager:binder call;
-
-# Allow Goodix HIDL fingerprint service registration
-allow gx_fpd hidl_base_hwservice:hwservice_manager add;
-allow gx_fpd default_android_hwservice:hwservice_manager add;
-allow gx_fpd hwservicemanager:binder { call transfer };
-allow hwservicemanager gx_fpd:binder { call transfer };

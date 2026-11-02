@@ -1,0 +1,3 @@
+# created by fix_unknown_sepolicy_types.py (--declare)
+type sysfs_virtualkeys, sysfs_type, fs_type;
+type vendor_qcom_ims_prop, property_type, vendor_property_type, vendor_public_property_type;

@@ -1,2 +1,12 @@
 # Allow system_app to set hardware nav key properties
 set_prop(system_app, vendor_hwkey_prop)
+
+# SystemUI: allow BlackBerry touchpad toggle
+set_prop(system_app, vendor_touchkeypad_prop)
+set_prop(system_app, vendor_touchkeypad_scrolling_prop)
+
+# KEY2 CPU Boost QS
+set_prop(system_app, vendor_cpuboost_prop)
+
+# KEY2 BoomSound QS
+set_prop(system_app, vendor_boomsound_prop)

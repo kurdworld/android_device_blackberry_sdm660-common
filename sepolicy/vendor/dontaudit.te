@@ -1,3 +1,58 @@
 dontaudit system_app system_suspend_control_service:service_manager find;
 dontaudit system_app system_suspend_control_internal_service:service_manager find;
 dontaudit vendor_init default_prop:file read;
+
+# Zygote-scoped threads that race ahead of domain transition during early
+# telephony/system_server/bluetooth/network_stack startup. The real work
+# happens after the thread's domain swaps, so the denials are log-only noise.
+dontaudit zygote radio:binder call;
+dontaudit zygote servicemanager:binder call;
+dontaudit zygote system_server:binder transfer;
+dontaudit system_server zygote:binder { call transfer };
+dontaudit network_stack zygote:binder call;
+dontaudit platform_app zygote:binder { call transfer };
+
+# Interactive shell noise: dmesg + getprop hitting vendor-namespace props
+dontaudit shell vendor_default_prop:file r_file_perms;
+dontaudit shell kernel:system syslog_read;
+
+# gd_stack_thread (bluetooth main thread) runs briefly under zygote scontext
+# before the domain swap. Its /data/misc/bluedroid accesses and wake_alarm
+# capability succeed under the real bluetooth domain; the pre-transition
+# denials are noise.
+dontaudit zygote bluetooth_data_file:dir create_dir_perms;
+dontaudit zygote bluetooth_data_file:file create_file_perms;
+dontaudit zygote self:capability2 wake_alarm;
+
+# qseecomd (tee domain) carries over the legacy /data/goodix path probe
+# from LOS22 at boot. Falls through to /persist/drm once the probe fails,
+# no functional impact.
+dontaudit tee system_data_file:dir r_dir_perms;
+dontaudit tee system_data_file:file { r_file_perms write };
+
+# HAL camera enumerates /data/local/tmp when CameraProvider starts; the
+# path is empty on athena.
+dontaudit hal_camera_default shell_data_file:dir search;
+
+# Bluetooth stack gd_stack_thread reads bluetooth props before its scontext
+# swaps out of zygote; real reads come from the bluetooth domain after.
+dontaudit zygote bluetooth_prop:file r_file_perms;
+
+# Early-boot getprop from vendor_qti_init_shell enumerates the entire prop
+# namespace, including default_prop. Harmless probe.
+dontaudit vendor_qti_init_shell default_prop:file r_file_perms;
+
+# hal_audio_default binder thread briefly probes AOSP audio_prop; the value
+# actually comes via vendor_audio_prop which it has access to.
+dontaudit hal_audio_default audio_prop:file r_file_perms;
+
+# iptables wrapper signalling its own children on timeout
+dontaudit netutils_wrapper self:capability kill;
+
+# Qualcomm data and time service apps probe zygote config at start; not needed.
+dontaudit vendor_qtidataservices_app zygote_config_prop:file r_file_perms;
+dontaudit vendor_timeservice_app zygote_config_prop:file r_file_perms;
+
+# init.qcom.rc chowns the rawdump by-name symlink; chmod already reaches the
+# partition through the link.
+dontaudit vendor_init block_device:lnk_file setattr;

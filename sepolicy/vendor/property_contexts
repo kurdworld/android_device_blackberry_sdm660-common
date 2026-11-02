@@ -25,7 +25,6 @@ sys.fp.firmware.version                 u:object_r:vendor_fingerprint_prop:s0
 gpu.stats.debug.level                   u:object_r:vendor_display_prop:s0
 vendor.gxfp.version                     u:object_r:vendor_fingerprint_prop:s0
 gf.debug.dump_data                      u:object_r:vendor_fingerprint_prop:s0
-goodix.fp.debug                         u:object_r:vendor_fingerprint_prop:s0
 goodix.fp.service.ready                 u:object_r:vendor_fingerprint_prop:s0
 
 # Radio
@@ -38,11 +37,14 @@ persist.vendor.wigig.npt.enable         u:object_r:vendor_radio_prop:s0
 ro.hardware.chipname                    u:object_r:exported_default_prop:s0
 
 # Touch keypad
-persist.vendor.touchkeypad.disabled              u:object_r:vendor_touchkeypad_prop:s0
-persist.vendor.touchkeypad.scrolling_disabled    u:object_r:vendor_touchkeypad_scrolling_prop:s0
+persist.vendor.touchkeypad.disabled     u:object_r:vendor_touchkeypad_prop:s0
+persist.vendor.touchkeypad.scrolling_disabled   u:object_r:vendor_touchkeypad_scrolling_prop:s0
 
-# FocalTech host-side DT2W compatibility mode
-persist.vendor.focaltech.host_dt2w               u:object_r:vendor_focaltech_host_dt2w_prop:s0 exact bool
+# KEY2 CPU Boost QS
+vendor.cpuboost.enabled     u:object_r:vendor_cpuboost_prop:s0
 
-# Custom prop to enable selecting zram compression algorithm
-persist.vendor.key2.zram.compressor     u:object_r:vendor_default_prop:s0
+# KEY2 BoomSound QS
+vendor.boomsound.enabled     u:object_r:vendor_boomsound_prop:s0
+
+# libperfmgr power HAL state
+vendor.powerhal.                          u:object_r:vendor_power_prop:s0

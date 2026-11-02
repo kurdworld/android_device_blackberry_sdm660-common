@@ -1,23 +1,32 @@
 # Camera provider service override — gralloc V4<->V1 compat shim.
 #
-# The BB OREO camera HAL module (/vendor/lib/hw/camera.sdm660.so) reads
-# gralloc private_handle_t at the V1 field offsets that Android 8 used.
-# On Android 15 (LOS22.2) the layout is V4 (fields layer_count/id/usage
-# precede size/offset/base, shifting everything by 20 bytes). Without
-# translation the JPEG encoder does memcpy() to a bogus address and dies
-# with SIGSEGV in JPEG_Enc thread.
+# The BB OREO camera HAL module (/vendor/lib/hw/camera.sdm660.so, a
+# vendor blob from ACQ160) reads gralloc private_handle_t at the V1
+# field offsets that Android 8 used. On Android 16 (LOS23) the layout
+# has moved to V4 (fields layer_count/id/usage precede size/offset/base,
+# shifting everything by 20 bytes). Without translation the JPEG
+# encoder does memcpy() to a bogus address and dies with SIGSEGV.
 #
 # libcameracompat.so intercepts native_handle_clone() and rewrites the
-# handle in place from V4 -> V1 order. It is loaded via LD_PRELOAD; the
-# noatsecure SELinux grant (hal_camera_default.te) keeps AT_SECURE=0
-# so bionic doesn't scrub LD_PRELOAD across the init domain transition.
+# handle in place from V4 -> V1 order. We attach the shim by patchelf'ing
+# it into camera.sdm660.so's DT_NEEDED list (done in the proprietary
+# blob, see vendor/blackberry/athena/.../camera.sdm660.so). The dynamic
+# linker loads DT_NEEDED regardless of AT_SECURE so this path is robust
+# even though the HAL process runs as uid cameraserver (UID change at
+# exec sets AT_SECURE=1, which causes bionic to scrub LD_*, so LD_PRELOAD
+# alone silently fails).
+#
+# The LD_PRELOAD setenv below is kept as a belt-and-suspenders hook for
+# any future debuggable context where AT_SECURE=0 (e.g. root-owned debug
+# binaries that also load the shim); it's ignored in the normal HAL path
+# without harm.
 
-service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service
+service vendor.camera.provider /vendor/bin/hw/android.hardware.camera.provider-service_32.lineage
     override
-    interface android.hardware.camera.provider@2.4::ICameraProvider legacy/0
+    interface aidl android.hardware.camera.provider.ICameraProvider/internal/0
     class hal
     user cameraserver
-    group audio camera input drmrpc
+    group audio camera input drmrpc usb
     ioprio rt 4
     capabilities SYS_NICE
     task_profiles CameraServiceCapacity MaxPerformance

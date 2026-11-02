@@ -1,1 +1,1 @@
-allow hal_imsrtp diag_device:chr_file { read write };
+allow vendor_hal_imsrtp vendor_diag_device:chr_file { read write };

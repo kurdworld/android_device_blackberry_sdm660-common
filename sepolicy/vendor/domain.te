@@ -1,0 +1,4 @@
+# The 4.19 kernel allocates graphics, camera and media buffers through ION.
+# Android 17 removed the platform rules for it, so restore what AOSP granted
+# before ION was retired.
+allow { domain -isolated_app_all } ion_device:chr_file r_file_perms;

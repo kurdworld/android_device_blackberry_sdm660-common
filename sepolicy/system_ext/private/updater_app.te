@@ -1,0 +1,5 @@
+# Non-A/B install: RecoverySystem.installPackage writes /cache/recovery/uncrypt_file and command
+allow updater_app cache_file:dir r_dir_perms;
+allow updater_app cache_recovery_file:dir rw_dir_perms;
+allow updater_app cache_recovery_file:file create_file_perms;
+allow updater_app recovery_service:service_manager find;

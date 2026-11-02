@@ -113,10 +113,6 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml
 
-# BlackBerry proprietary framework permissions
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/prebuilt/com.blackberry.only.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/com.blackberry.only.xml
-
 # Bluetooth
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0 \
@@ -125,32 +121,47 @@ PRODUCT_PACKAGES += \
     android.hardware.bluetooth.audio@2.0-impl \
     vendor.qti.hardware.btconfigstore@1.0.vendor
 
-# Camera
+# Camera (Sony-style: AIDL provider + 32-bit camera HAL from source)
 PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.4-impl \
-    android.hardware.camera.provider@2.4-service \
-    libcameracompat
+    android.hardware.camera.provider-service_32.lineage \
+    camera.sdm660:32 \
+    android.frameworks.displayservice@1.0.vendor:32
 
+# QCamera2 HAL target - athena has same camera config as Sony nile (non-ganges sensors)
+# athena uses default code paths (no TARGET_NILE/TARGET_GANGES defines)
+# $(call soong_config_set,qcom_camera_hal,target,nile)
+
+
+# AOSP Software Keymaster 4.0 + Gatekeeper (supports FBE v2)
+PRODUCT_PACKAGES += \
+    android.hardware.keymaster@4.0-service \
+    android.hardware.gatekeeper@1.0-service.software \
+    android.hardware.keymaster@4.0.vendor \
+    android.hardware.gatekeeper@1.0.vendor
+
+# Vibrator (QTI - supports qti-haptics input FF)
+PRODUCT_PACKAGES += \
+    vendor.qti.hardware.vibrator.service
+
+# Keep the input system from also driving qti-haptics as an input vibrator;
+# HapticsPolicy.xml is left out so compose support stays off.
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/camera/libcameracompat/init.cameracompat.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cameracompat.rc
+    vendor/qcom/opensource/vibrator/excluded-input-devices.xml:$(TARGET_COPY_OUT_VENDOR)/etc/excluded-input-devices.xml
 
-# Configstore
-PRODUCT_PACKAGES += \
-    disable_configstore
+# Use full-voltage waveforms for biometric confirmation and rejection,
+# matching the legacy kernel 4.4 vibrator fallback behavior.
+PRODUCT_COPY_FILES += \
+    $(COMMON_PATH)/configs/haptic_feedback_customization.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/haptic_feedback_customization.xml
 
 # Display
 PRODUCT_PACKAGES += \
-    android.frameworks.displayservice@1.0.vendor \
-    android.hardware.graphics.allocator@2.0-impl:64 \
-    android.hardware.graphics.allocator@2.0-service \
     android.hardware.graphics.composer@2.1-service \
-    android.hardware.graphics.mapper@2.0-impl \
     android.hardware.graphics.mapper@3.0-impl-qti-display \
     android.hardware.graphics.mapper@4.0-impl-qti-display \
-    gralloc.sdm660 \
-    hwcomposer.qcom \
+    vendor.qti.hardware.memtrack-service \
     vendor.qti.hardware.display.allocator-service \
-    vendor.qti.hardware.memtrack-service
+    gralloc.sdm660 \
+    hwcomposer.qcom
 
 # Device customizations
 PRODUCT_PACKAGES += \
@@ -165,23 +176,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.biometrics.fingerprint-service.lineage
 
-# FocalTech DT2W compatibility mode
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/init/init.host_dt2w.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.host_dt2w.rc
-
 # Gatekeeper
 PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0.vendor
-
-# Vibrator - QTI haptics HAL for the kernel 4.19 input FF interface.
-# The product configuration also excludes haptic input devices from
-# InputReader while leaving them available to the vibrator HAL.
-$(call inherit-product, vendor/qcom/opensource/vibrator/vibrator-vendor-product.mk)
-
-# Use full-voltage waveforms for biometric confirmation and rejection,
-# matching the legacy kernel 4.4 vibrator fallback behavior.
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/configs/haptic_feedback_customization.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/haptic_feedback_customization.xml
 
 # Keyboard
 PRODUCT_COPY_FILES += \
@@ -189,20 +186,10 @@ PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*,$(COMMON_PATH)/configs/keylayout/keylayout/,$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/) \
     $(call find-copy-subdir-files,*,$(COMMON_PATH)/configs/keylayout/idc,$(TARGET_COPY_OUT_VENDOR)/usr/idc/)
 
-# FM radio - Qualcomm
-PRODUCT_PACKAGES += \
-    FM2 \
-    qcom.fmradio \
-    RevampedFMRadio
-
 # Framework Detect
 PRODUCT_PACKAGES += \
     libqti_vndfwk_detect \
     libqti_vndfwk_detect.vendor
-
-# Perf (perf-hint stub client for OMX video decoder; built from source)
-PRODUCT_PACKAGES += \
-    libqti-perfd-client
 
 # GPS
 PRODUCT_PACKAGES += \
@@ -223,7 +210,10 @@ PRODUCT_PACKAGES += \
     gps.conf \
     gnss_antenna_info.conf \
     flp.conf \
-    lowi.conf
+    izat.conf \
+    lowi.conf \
+    sap.conf \
+    xtwifi.conf
 
 # Init
 $(call soong_config_set,libinit,vendor_init_lib,//$(LOCAL_PATH):init_blackberry_sdm660)
@@ -268,16 +258,11 @@ PRODUCT_PACKAGES += \
 #PRODUCT_PACKAGES += \
 #    vendor.lineage.livedisplay-service.sdm
 
-$(call soong_config_set,livedisplay_sdm,enable_dm,false)
+$(call soong_config_set_bool,livedisplay_sdm,enable_dm,false)
 
 # Media
-
-# Only copy the common media profiles if a device tree hasn't overridden it (separate profile for luna is needed)
-ifneq ($(TARGET_USES_CUSTOM_MEDIA_PROFILES), true)
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/media/media_profiles_V1_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml
-endif
-PRODUCT_COPY_FILES += \
+    $(COMMON_PATH)/media/media_profiles_V1_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
     $(COMMON_PATH)/media/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
     $(COMMON_PATH)/media/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml
 
@@ -346,13 +331,12 @@ PRODUCT_PACKAGES += \
 
 # Power
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json \
-    system/core/libprocessgroup/profiles/cgroups_28.json:$(TARGET_COPY_OUT_VENDOR)/etc/cgroups.json \
-    system/core/libprocessgroup/profiles/task_profiles_28.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json
+    $(COMMON_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
 
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power-service.lineage-libperfmgr
+    android.hardware.power-service.lineage-libperfmgr \
+    libperfmgr
 
 # RCS
 PRODUCT_PACKAGES += \
@@ -373,6 +357,7 @@ PRODUCT_COPY_FILES += \
 # Ramdisk
 PRODUCT_PACKAGES += \
     fstab.qcom \
+    fstab.qcom.ramdisk \
     init.blackberry.rc \
     init.qcom.rc \
     init.qcom.usb.rc \
@@ -387,8 +372,8 @@ PRODUCT_PACKAGES += \
     init.qcom.post_boot.sh \
     init.qcom.sensors.sh \
     init.qcom.sh \
+    init.qti.qseecomd.sh \
     init.qcom.usb.sh \
-    loggy.sh \
 
 # RenderScript
 PRODUCT_PACKAGES += \
@@ -417,8 +402,9 @@ PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
     hardware/google/interfaces \
     hardware/google/pixel \
-    hardware/lineage/interfaces/power-libperfmgr \
-    hardware/qcom-caf/common/libqti-perfd-client \
+    hardware/google/pixel/power-libperfmgr \
+    hardware/calyx/interfaces/power-libperfmgr \
+    hardware/qcom-caf/thermal-legacy-um \
     vendor/qcom/opensource/usb/etc
 
 # Telephony-ext
@@ -444,29 +430,31 @@ PRODUCT_PACKAGES_DEBUG += \
     update_engine_client
 
 # USB
-# Kernel 4.19 exposes role switching through /sys/class/typec/port0,
-# while the legacy dual_role_usb class is absent. Use the QTI AIDL port
-# and gadget HALs so Android can manage both the Type-C port and gadget
-# compositions.
+# 1.3-service.dual_role_usb reads /sys/class/dual_role_usb/, which the 4.19
+# kernel does not export. The Type-C state lives at /sys/class/typec/port0/,
+# so use the Qualcomm AIDL USB HAL pair instead (same HAL pair as Sony nile
+# on msm-4.19). Without this the framework sees zero USB ports and the
+# "USB Preferences" UI items are non-functional.
 PRODUCT_PACKAGES += \
     android.hardware.usb-service.qti \
     android.hardware.usb.gadget-service.qti \
     usb_compositions.conf
 
+# Vibrator - using QTI vibrator service defined above
+
 # VNDK
 # Update this list with what each blob is actually for
 # libstdc++: camera.sdm660
-PRODUCT_PACKAGES += \
-    libstdc++_vendor
+PRODUCT_PACKAGES +=
 
-# Touch
-PRODUCT_PACKAGES += \
-    vendor.lineage.touch@1.0-service.blackberry
+# Touch - vendor.lineage.touch AIDL service (GloveMode + KeyDisabler)
+PRODUCT_PACKAGES +=
 
-# Thermal
+# Thermal (QTI AIDL; the 4.19 kernel has no thermal netlink, so it polls sysfs)
 PRODUCT_PACKAGES += \
-    android.hardware.thermal@1.0-impl:64 \
-    android.hardware.thermal@1.0-service
+    android.hardware.thermal-service.qti
+
+$(call soong_config_set,qti_thermal,netlink,false)
 
 # Weaver
 PRODUCT_PACKAGES += \
@@ -494,5 +482,9 @@ PRODUCT_PACKAGES += \
     libhidlbase-v32 \
     libhidlbase-v32.vendor \
     libhidl_shim_full \
+    libstdc++_vendor \
     libutils-v33 \
     libcutils_shim
+
+# Legacy ION implementation for sdm660 kernel 4.19
+$(call soong_config_set_bool,libion,legacy_impl,true)

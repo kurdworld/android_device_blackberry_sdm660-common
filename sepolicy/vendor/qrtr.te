@@ -1,4 +1,4 @@
-# Allow qrtr to create and use sockets
-allow qrtr self:netlink_route_socket { create_socket_perms nlmsg_write };
+# Allow vendor_qrtr to create and use sockets
+allow vendor_qrtr self:netlink_route_socket { create_socket_perms nlmsg_write };
 
-allow qrtr self:capability net_admin;
+allow vendor_qrtr self:capability net_admin;

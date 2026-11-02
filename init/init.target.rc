@@ -65,7 +65,15 @@ on post-fs
 on init
     write /sys/module/qpnp_rtc/parameters/poweron_alarm 1
 
-on post-fs-data
+on late-init
+    stop console
+
+on post-fs-data && property:vendor.usb.use_gadget_hal=0
+    # Force start adbd early for debugging (legacy path only; when the
+    # AIDL gadget HAL is in use, configfs must stay at 2 and the HAL
+    # drives the function setup, so this override would defeat it).
+    setprop sys.usb.configfs 1
+    setprop sys.usb.config adb
     mkdir /data/tombstones/modem 0771 system system
     mkdir /data/tombstones/lpass 0771 system system
     mkdir /data/tombstones/wcnss 0771 system system
@@ -73,8 +81,6 @@ on post-fs-data
     mkdir /data/vendor/hbtp 0750 system system
     mkdir /data/misc/seemp 0700 system system
     mkdir /data/vendor/tloc 0700 system drmrpc
-    mkdir /data/goodix 0770 system system
-    restorecon_recursive /data/goodix
 
 on boot
     start rmt_storage
@@ -106,16 +112,17 @@ on boot
     mkdir /data/vendor/camera 0770 camera camera
 
 #Load WLAN driver
-   insmod /system/vendor/lib/modules/wlan.ko
+   insmod /vendor/lib/modules/wlan.ko
 
-# USB controller configuration
+#USB controller configuration
     setprop vendor.usb.rndis.func.name "rndis_bam"
     setprop vendor.usb.rmnet.func.name "rmnet_bam"
     setprop vendor.usb.rmnet.inst.name "rmnet"
     setprop vendor.usb.dpl.inst.name "dpl"
     write /sys/module/usb_f_qcrndis/parameters/rndis_dl_max_xfer_size 15916
-    # init.qcom.usb.rc selects the appropriate configfs mode from
-    # vendor.usb.use_gadget_hal.
+    # Don't hard-set sys.usb.configfs here: init.qcom.usb.rc already picks
+    # the right value based on vendor.usb.use_gadget_hal (2 for HAL mode,
+    # 1 for legacy via the vendor.usb.controller trigger).
 
 #Peripheral manager
 service vendor.per_mgr /system/vendor/bin/pm-service
@@ -165,6 +172,7 @@ service adsprpcd /vendor/bin/adsprpcd audiopd
    class main
    user media
    group media
+   disabled
 
 service hbtp /system/vendor/bin/hbtp_daemon
     class main
@@ -283,3 +291,19 @@ service smcinvoked /system/bin/smcinvoked
    user system
    group system
 
+# Touch keypad toggle via property (written by the TouchKeypad QS tile)
+on property:persist.vendor.touchkeypad.disabled=1
+    write /sys/devices/touch_keypad/turn_off 1
+
+on property:persist.vendor.touchkeypad.disabled=0
+    write /sys/devices/touch_keypad/turn_off 0
+
+
+# CPU Boost QS: ephemeral property, defaults OFF after reboot.
+on property:vendor.cpuboost.enabled=1
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor performance
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor performance
+
+on property:vendor.cpuboost.enabled=0
+    write /sys/devices/system/cpu/cpufreq/policy0/scaling_governor schedutil
+    write /sys/devices/system/cpu/cpufreq/policy4/scaling_governor schedutil

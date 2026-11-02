@@ -1,0 +1,2 @@
+sys.diagnostics.collect     u:object_r:diagnostics_prop:s0 exact string
+sys.diagnostics.status      u:object_r:diagnostics_prop:s0 exact string

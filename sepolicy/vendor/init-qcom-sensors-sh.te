@@ -1,0 +1,4 @@
+# init.qcom.sensors.sh fixes ownership of the sensor calibration in /persist
+allow vendor_init-qcom-sensors-sh self:capability { chown dac_read_search };
+allow vendor_init-qcom-sensors-sh vendor_persist_sensors_file:dir setattr;
+allow vendor_init-qcom-sensors-sh vendor_persist_sensors_file:file setattr;

@@ -1,4 +1,5 @@
-r_dir_file(thermal-engine, sysfs_devfreq);
+r_dir_file(vendor_thermal-engine, vendor_sysfs_devfreq);
 
-dontaudit thermal-engine sysfs:dir read;
-dontaudit thermal-engine sysfs:file read;
+dontaudit vendor_thermal-engine sysfs:dir read;
+dontaudit vendor_thermal-engine sysfs:file read;
+r_dir_file(vendor_thermal-engine, sysfs_batteryinfo)

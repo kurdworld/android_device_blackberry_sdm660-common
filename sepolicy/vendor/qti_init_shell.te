@@ -1,39 +1,50 @@
-allow qti_init_shell { sysfs sysfs_dm }:file write;
+allow vendor_qti_init_shell { sysfs sysfs_dm }:file write;
 
-allow qti_init_shell vendor_radio_data_file:dir rw_dir_perms;
-allow qti_init_shell vendor_radio_data_file:file create_file_perms;
+allow vendor_qti_init_shell vendor_radio_data_file:dir rw_dir_perms;
+allow vendor_qti_init_shell vendor_radio_data_file:file create_file_perms;
 
-allow qti_init_shell rfs_shared_hlos_file:dir create_dir_perms;
-allow qti_init_shell rfs_shared_hlos_file:file create_file_perms;
+allow vendor_qti_init_shell vendor_persist_rfs_shared_hlos_file:dir create_dir_perms;
+allow vendor_qti_init_shell vendor_persist_rfs_shared_hlos_file:file create_file_perms;
 
-allow qti_init_shell ctl_start_prop:property_service set;
-allow qti_init_shell ctl_stop_prop:property_service set;
+allow vendor_qti_init_shell ctl_start_prop:property_service set;
+allow vendor_qti_init_shell ctl_stop_prop:property_service set;
 
-allow qti_init_shell default_prop:file { getattr open };
-allow qti_init_shell default_prop:property_service set;
-allow qti_init_shell persist_file:dir getattr;
-allow qti_init_shell sysfs:file setattr;
-allow qti_init_shell persist_file:dir search;
-allow qti_init_shell self:capability dac_read_search;
-allow qti_init_shell vendor_alarm_prop:property_service set;
+allow vendor_qti_init_shell default_prop:file { getattr open };
+allow vendor_qti_init_shell default_prop:property_service set;
+allow vendor_qti_init_shell vendor_persist_file:dir getattr;
+allow vendor_qti_init_shell sysfs:file setattr;
+allow vendor_qti_init_shell vendor_persist_file:dir search;
+allow vendor_qti_init_shell self:capability dac_read_search;
+allow vendor_qti_init_shell vendor_alarm_prop:property_service set;
 
 # bochenekk stuff - hwkeys
-allow qti_init_shell vendor_hwkey_prop:file r_file_perms;
-allow qti_init_shell vendor_hwkey_prop:property_service set;
+allow vendor_qti_init_shell vendor_hwkey_prop:file r_file_perms;
+allow vendor_qti_init_shell vendor_hwkey_prop:property_service set;
 
-# Keyboard layout detection - trace_util reads traceability partition
-allow qti_init_shell traceability_block_device:blk_file { open read getattr };
+# loggy.sh: allow running logcat and dmesg, writing logs to /cache/
+allow vendor_qti_init_shell shell_exec:file { read open getattr execute execute_no_trans };
+allow vendor_qti_init_shell system_file:file { read open getattr execute execute_no_trans };
+allow vendor_qti_init_shell logcat_exec:file { read open getattr execute execute_no_trans };
+allow vendor_qti_init_shell cache_file:dir { search write add_name };
+allow vendor_qti_init_shell cache_file:file { create write open getattr append };
+allow vendor_qti_init_shell kmsg_device:chr_file { read open };
+allow vendor_qti_init_shell logdr_socket:sock_file write;
+allow vendor_qti_init_shell logd:unix_stream_socket connectto;
+allow vendor_qti_init_shell self:capability { dac_override };
 
-# trace_util reads /proc/sys/vm/overcommit_memory while mapping the
-# traceability partition used for physical-keyboard layout detection.
-allow qti_init_shell proc_overcommit_memory:file r_file_perms;
+# Keyboard layout detection — trace_util reads the traceability partition
+# via /dev/block/.../by-name/traceability symlink. Keep the legacy
+# block_device:blk_file allow as a fallback until all userspace probes the
+# by-name path; add the narrower traceability_block_device for the cleaner path.
+allow vendor_qti_init_shell block_device:blk_file { open read getattr };
+allow vendor_qti_init_shell block_device:lnk_file { read getattr };
+allow vendor_qti_init_shell traceability_block_device:blk_file r_file_perms;
 
-# Disable clustered swap read-ahead for ZRAM-backed swap.
-# init.qcom.post_boot.sh writes /proc/sys/vm/page-cluster.
-allow qti_init_shell proc_page_cluster:file w_file_perms;
+# trace_util reads /proc/sys/vm/overcommit_memory to decide how to mmap
+allow vendor_qti_init_shell proc_overcommit_memory:file r_file_perms;
 
-# Selecting the kernel 4.19 mem_latency devfreq governor creates one
-# performance event for each CPU. Permit the post-boot script to start
-# those kernel monitors so the CPU-to-DDR latency devices do not remain
-# on the powersave governor.
-allow qti_init_shell self:perf_event cpu;
+# init.qcom.post_boot.sh: zram swap tuning
+allow vendor_qti_init_shell proc_page_cluster:file w_file_perms;
+
+# init.qti.qseecomd.sh waits for the QSEECom listeners
+get_prop(vendor_qti_init_shell, vendor_tee_listener_prop)

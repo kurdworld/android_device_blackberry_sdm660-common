@@ -4,20 +4,10 @@
 # ANT+
 system/lib64/com.qualcomm.qti.ant@1.0.so
 
-# BlackBerry framework
-# NOTE: The stock ACQ160 com.blackberry.only.jar is stripped of its classes.dex, 
-# which causes building to fail. To generate the correct file from a stock device or dump:
-# 1. Extract system/framework/oat/arm64/com.blackberry.only.vdex
-# 2. Run: vdexExtractor -i com.blackberry.only.vdex
-# 3. Rename com.blackberry.only_classes.dex to classes.dex
-# 4. Inject it into the JAR: zip -u com.blackberry.only.jar classes.dex
-system/framework/com.blackberry.only.jar
-
-# Bluetooth - from DDV_sprout - 00WW_3_690_SP07 unless noted otherwise
+# Bluetooth - from DDV_sprout - 00WW_3_690_SP07
 vendor/bin/hw/android.hardware.bluetooth@1.0-service-qti|07d96d0d3c4a500b14ea3c97e02b9eb5ee2bbc4d
 vendor/etc/init/android.hardware.bluetooth@1.0-service-qti.rc|f4ee3b2da2b08647447869ade86ec63f7340accc
-# HAL impl from ASUS 4.19 build
-vendor/lib64/hw/android.hardware.bluetooth@1.0-impl-qti.so|c6be436d0f66aafd5be3aa51431d4fc02c50971d
+vendor/lib64/hw/android.hardware.bluetooth@1.0-impl-qti.so|14d44c77a6f0b305ec7e03e679d7692884a3985d
 vendor/lib64/hw/vendor.qti.hardware.bluetooth_sar@1.1-impl.so|156ec51ccb53f667605cf99422abf9357888b4b6
 vendor/lib64/libbt-hidlclient.so|ff301380cf3c0ff68d2b7fcda3ba428ebf0a859e
 vendor/lib64/libbtnv.so|0c74a43550b939b9496b03b3285fa950cf560c48
@@ -29,7 +19,6 @@ vendor/bin/hvdcp_opti
 
 # CNE - from FP3 - 6.A.031.2
 vendor/app/CneApp/CneApp.apk|551d0e3251eeda3af8dfa8bb55cd83b858365db8
-vendor/app/IWlanService/IWlanService.apk|a8bdac9638bc711e23269d2eead3f46a7b3b6a25
 vendor/bin/cnd|78d2771551abf43a093a0fbe0aba933c9f6a8097
 vendor/etc/cne/mwqem.conf|c51d3893b86ab89fae218f3a92c4f9c18ea401a8
 vendor/etc/cne/profileMwqem.xml|947917691684584b7e2ddf3588cd6f8e99f3804f
@@ -173,11 +162,12 @@ vendor/lib64/vendor.qti.hardware.fm@1.0.so;MODULE_SUFFIX=_vendor|f6e23f902b7e152
 vendor/bin/loc_launcher|923d85bd727fb809b43fa86adbf739dd2b55285c
 vendor/bin/lowi-server;DISABLE_CHECKELF|5d18cc8854549c366f63cdce29178eb48c9b24b0
 vendor/bin/mlid|46ddb37a149cf09bff592437a41ff30e849c234e
-vendor/bin/xtra-daemon|0d15669c226784e4033ddee6cf396c39ff3d2bdf|049ad7e15df6ad97ba2ff345527a34ad2db49a5d
+vendor/bin/xtra-daemon|0d15669c226784e4033ddee6cf396c39ff3d2bdf
 vendor/bin/xtwifi-client|7e5cb0670b20c12fbc5cbf4fb642efdd72e92f46
 vendor/bin/xtwifi-inet-agent|73eb9393ba634d805055eea3fbea64785063be4b
 vendor/etc/cacert_location.pem|0789bf799c7e45d352a83e2f79ddb0cea86db85b
-vendor/etc/izat.conf|a795b79b68e3705c0334432dded0c0d246f47cb3|a6041ab6c9da7c8a0ca136518a8f55a6d6321dfd
+vendor/etc/izat.conf|a795b79b68e3705c0334432dded0c0d246f47cb3|5f2d458688a4ede50af009fc3d2c91db45176e93
+vendor/etc/lowi.conf|2045e83483849a124e5fef052b59190f1b784df0
 vendor/etc/sap.conf|b5ea86d9d9ee36dc13194474d343dae36f6fa032
 vendor/etc/vintf/manifest/vendor.qti.gnss@4.0-service.xml|6514b13f55abc0acc28e004c35ff93fb972d61a9
 vendor/etc/xtra_root_cert.pem|f55a31ec4d9cf8ce2724acadecf00c779f8767db
@@ -211,63 +201,53 @@ vendor/lib64/vendor.qti.gnss@3.0.so|511a8354bb199b1b4d0d264762bdc078fd9f3e6b
 vendor/lib64/vendor.qti.gnss@4.0-service.so|218e7e15a1d3b58bb8adb695e7b37036977c5573
 vendor/lib64/vendor.qti.gnss@4.0.so|7ba7853e772806f98fe60243542498a146dfe248
 
-# GPS (gps-xtra-fix3 additions)
-vendor/etc/gps.prop|da39a3ee5e6b4b0d3255bfef95601890afd80709
-vendor/etc/xtra_single_boot.conf|98faf411f0a7c40b26191209f1143bb2a5a5f8c6
-
 # Gatekeeper
 vendor/bin/hw/android.hardware.gatekeeper@1.0-service-qti
 vendor/etc/init/android.hardware.gatekeeper@1.0-service-qti.rc
 vendor/lib/hw/android.hardware.gatekeeper@1.0-impl-qti.so
 vendor/lib64/hw/android.hardware.gatekeeper@1.0-impl-qti.so
 
-# Graphics - ASUS Linux 4.19 / gfx-adreno.lnx.1.0.r155-rel
-vendor/lib/egl/eglSubDriverAndroid.so|501f7cf3ec55d4ded5f5921e4fe0a0822d077d46
-vendor/lib/egl/libEGL_adreno.so;SYMLINK=vendor/lib/libEGL_adreno.so;DISABLE_CHECKELF|42f0f4ab0ca69d7ba880bb9afcb0fb6f4290df98
-vendor/lib/egl/libGLESv1_CM_adreno.so;DISABLE_CHECKELF|1e6924d8c36508360d38e764618b25b0443c4d8e
-vendor/lib/egl/libGLESv2_adreno.so;SYMLINK=vendor/lib/libGLESv2_adreno.so;DISABLE_CHECKELF|1c6a646580bff7f4baf4aaf6d4eb0c2f7a55b75f
-vendor/lib/egl/libq3dtools_adreno.so;SYMLINK=vendor/lib/libq3dtools_adreno.so;DISABLE_CHECKELF|f59f0611355ff8b5ce3cfb97abdf49f5183052ac
-vendor/lib/egl/libq3dtools_esx.so;SYMLINK=vendor/lib/libq3dtools_esx.so;DISABLE_CHECKELF|fcbda2e21ccfebbd1c97c1ce6314fef3bbd412b5
-vendor/lib/hw/vulkan.adreno.so;DISABLE_CHECKELF|1f6c263e550e5f467f1628dae5d00130f8501a8a
-vendor/lib/libC2D2.so;DISABLE_CHECKELF|b7a6d2743e48d614f4915c76bca74068de129a66
-vendor/lib/libCB.so;DISABLE_CHECKELF|baf55bcf8cf894b4fbbcaa1c5b8421d6a4b6d749
-vendor/lib/libOpenCL.so;DISABLE_CHECKELF|a1e2335088cd01efdbc56b27f311afaaad18d87d
-vendor/lib/libVkLayer_q3dtools.so;DISABLE_CHECKELF|1faf98c2a2b69e30b1fb1dfffd376c79fdf9122c
-vendor/lib/libadreno_utils.so;DISABLE_CHECKELF|57dc2426c25c16a4f250f23a7dae9d7239c349d1
+# Graphics
+vendor/lib/egl/eglSubDriverAndroid.so
+vendor/lib/egl/libEGL_adreno.so;SYMLINK=vendor/lib/libEGL_adreno.so
+vendor/lib/egl/libGLESv1_CM_adreno.so
+vendor/lib/egl/libGLESv2_adreno.so;SYMLINK=vendor/lib/libGLESv2_adreno.so
+vendor/lib/egl/libq3dtools_adreno.so;SYMLINK=vendor/lib/libq3dtools_adreno.so
+vendor/lib/egl/libq3dtools_esx.so;SYMLINK=vendor/lib/libq3dtools_esx.so
+vendor/lib/libC2D2.so
+vendor/lib/libCB.so
+vendor/lib/libOpenCL.so;DISABLE_CHECKELF
+vendor/lib/libadreno_utils.so
 vendor/lib/libbccQTI.so;DISABLE_CHECKELF
-vendor/lib/libc2d30_bltlib.so;DISABLE_CHECKELF|41952af1727dfa131d81a0f77297d26c86adf002
-vendor/lib/libgpudataproducer.so;DISABLE_CHECKELF|459763a17cc919392b32e644f24573262bbac79d
-vendor/lib/libgsl.so;DISABLE_CHECKELF|ac60cdedd871e7c7d3e9480bad67f9b30fa9f264
-vendor/lib/libllvm-glnext.so;DISABLE_CHECKELF|17844b81e93a61fbe81cb04df30a7309b7a7bb8f
-vendor/lib/libllvm-qcom.so;DISABLE_CHECKELF|395da6ea6af2d9ad0a719e34b0379b0062a1b99d
-vendor/lib/libperfgluelayer.so;DISABLE_CHECKELF|9f510042baa4cc6e5af7fe303e5e7285a9154aa6
-vendor/lib/librs_adreno.so;DISABLE_CHECKELF|5bf85e1f671444105323c9f61799c6cf3a0ea075
-vendor/lib64/egl/eglSubDriverAndroid.so|52cc62010df3eabdd440fc756e2c4abee35dabeb
-vendor/lib64/egl/libEGL_adreno.so;SYMLINK=vendor/lib64/libEGL_adreno.so;DISABLE_CHECKELF|ccb68f54eda4135c29b2cf059cc5d9cc2ed6b029
-vendor/lib64/egl/libGLESv1_CM_adreno.so;DISABLE_CHECKELF|eac8a37f8a2cc19cfd0285ec54b0ea1bacfd7430
-vendor/lib64/egl/libGLESv2_adreno.so;SYMLINK=vendor/lib64/libGLESv2_adreno.so;DISABLE_CHECKELF|e3266eddb7e966ae0edadacfa589f4271000feb1
-vendor/lib64/egl/libq3dtools_adreno.so;SYMLINK=vendor/lib64/libq3dtools_adreno.so;DISABLE_CHECKELF|7c40ea686640d4a481aacd2426347ef6abb593e7
-vendor/lib64/egl/libq3dtools_esx.so;DISABLE_CHECKELF|6e2e9bc150592ef22b96f26d31244f8a2a4495e3
-vendor/lib64/hw/vulkan.adreno.so;DISABLE_CHECKELF|2c371b131a2672c96d7ecf02bcbda954f9662879
-vendor/lib64/libC2D2.so;DISABLE_CHECKELF|6279d212cfbec1129278d966b3064beab1249a71
-vendor/lib64/libCB.so;DISABLE_CHECKELF|c4434396cb6c2ac5a6d35fa9a04dcc4b3d4b6a91
-vendor/lib64/libOpenCL.so;DISABLE_CHECKELF|df73d6045873350b3ef49a8eaaa0c6e5fd958a4c
-vendor/lib64/libVkLayer_q3dtools.so;DISABLE_CHECKELF|2c2d01cbfd99c62c044ee544089a51f9028f4095
-vendor/lib64/libadreno_utils.so;DISABLE_CHECKELF|fd2e8e7ef74a136cab7e309827f5aaab402c9b37
+vendor/lib/libc2d30_bltlib.so
+vendor/lib/libgpudataproducer.so
+vendor/lib/libgsl.so
+vendor/lib/libllvm-glnext.so;DISABLE_CHECKELF
+vendor/lib/libllvm-qcom.so;DISABLE_CHECKELF
+vendor/lib/librs_adreno.so
+vendor/lib64/egl/eglSubDriverAndroid.so
+vendor/lib64/egl/libEGL_adreno.so;SYMLINK=vendor/lib64/libEGL_adreno.so
+vendor/lib64/egl/libGLESv1_CM_adreno.so
+vendor/lib64/egl/libGLESv2_adreno.so;SYMLINK=vendor/lib64/libGLESv2_adreno.so
+vendor/lib64/egl/libq3dtools_adreno.so;SYMLINK=vendor/lib64/libq3dtools_adreno.so
+vendor/lib64/egl/libq3dtools_esx.so;SYMLINK=vendor/lib64/libq3dtools_esx.so
+vendor/lib64/libC2D2.so
+vendor/lib64/libCB.so
+vendor/lib64/libOpenCL.so;DISABLE_CHECKELF
+vendor/lib64/libadreno_utils.so
 vendor/lib64/libbccQTI.so;DISABLE_CHECKELF
-vendor/lib64/libc2d30_bltlib.so;DISABLE_CHECKELF|2ef436038e8acd4fc5547f9f4136f701c6a8064f
-vendor/lib64/libgpudataproducer.so;DISABLE_CHECKELF|0adf0de8b32f53b27dd4893f24983defc1414de9
-vendor/lib64/libgsl.so;DISABLE_CHECKELF|d39c92144b3bde0a15be1a0c9599ee957e3f79c0
-vendor/lib64/libllvm-glnext.so;DISABLE_CHECKELF|d315c9af3af613da5fb78c9fd60bde93bf01f98c
-vendor/lib64/libllvm-qcom.so;DISABLE_CHECKELF|62500997b4526ae07e5ea302300498a39a10e2ad
-vendor/lib64/libperfgluelayer.so;DISABLE_CHECKELF|8a4a53efc0430a2f44a41b3849b356b027e7a40e
-vendor/lib64/librs_adreno.so;DISABLE_CHECKELF|e1e8c1db5fd06d55498bc235618acb2792174411
+vendor/lib64/libc2d30_bltlib.so
+vendor/lib64/libgpudataproducer.so
+vendor/lib64/libgsl.so
+vendor/lib64/libllvm-glnext.so;DISABLE_CHECKELF
+vendor/lib64/libllvm-qcom.so;DISABLE_CHECKELF
+vendor/lib64/librs_adreno.so
 
 # Graphics (HDR)
 vendor/lib/libhdr_tm.so
 vendor/lib64/libhdr_tm.so
 
-# Graphics (SDM) - from PL2_sprout - QKQ1.190828.002 unless noted otherwise
+# Graphics (SDM) - from PL2_sprout - QKQ1.190828.002
 vendor/lib/libqseed3.so|f1c5c5e2db7cf1bf1cd6782af3476ec721c525e7
 vendor/lib/libsdm-color.so|2856bf71af603076b23d4c206dacba7c82350387
 vendor/lib/libsdm-diag.so|b1813c5639553537ccda31b2e44b5d4a85eb2adc
@@ -275,12 +255,15 @@ vendor/lib/libsdm-disp-vndapis.so|15a98ef885dbd29935b1107d7a2988ae495abb87
 vendor/lib/libsdmextension.so|37d5fca198c8e8526d6a4cb95f9c4bdf719e0efd
 vendor/lib/libtinyxml2_1.so|f54f81359c78715315bc24678c34c129413e6c92
 vendor/lib64/libqseed3.so|24ae4dfe5d9fa27a858b64dfafd1c713da6e6fde
-# 64-bit SDM display blobs from the ASUS Linux 4.19 graphics pack
-vendor/lib64/libsdm-color.so|d0c5d3287256c034437eeb007be068cf67742805
-vendor/lib64/libsdm-diag.so|cfcd838d9ca203e70a5e284b36a274e6b479f485
-vendor/lib64/libsdm-disp-vndapis.so|a5a1ebf08f7c1f4104cbf8ac69d5f42523fdb0fa
-vendor/lib64/libsdmextension.so|9baf67fa56d5c7bb296bf6c4942c253522638dd2
+vendor/lib64/libsdm-color.so|ed022cfcc1546c11b82991986e0a938464400858
+vendor/lib64/libsdm-diag.so|6eb99b83036f917070393fa067eaebc50a5ff307
+vendor/lib64/libsdm-disp-vndapis.so|ba4978c373f9892d884d07c4cf25dba9d73fda1f
+vendor/lib64/libsdmextension.so|264c00a0920d291700b2948b9337037684986921
 vendor/lib64/libtinyxml2_1.so|ba981e332895a053a67fc54a8190365a3ad37f2d
+
+# Graphics (Vulkan)
+vendor/lib/hw/vulkan.adreno.so
+vendor/lib64/hw/vulkan.adreno.so
 
 # Graphics (Firmware - Adreno)
 vendor/firmware/a225_pfp.fw
@@ -307,9 +290,6 @@ vendor/firmware/a530v3_seq.fw2
 vendor/firmware/a540_gpmu.fw2
 vendor/firmware/leia_pfp_470.fw
 vendor/firmware/leia_pm4_470.fw
-
-# Keyboard layout detection (from retail)
-vendor/bin/trace_util
 
 # Keymaster (QTI)
 vendor/bin/hw/android.hardware.keymaster@3.0-service-qti
@@ -362,10 +342,6 @@ vendor/lib/libpn553_fw.so:vendor/lib64/libpn553_fw.so
 vendor/bin/pm-proxy|42383b9163716d8e6d81f0516e9cf09f22ea8b06
 vendor/bin/pm-service|b0a5d3491615ef9a237d93a393082105e3c0097c
 vendor/lib64/libperipheral_client.so|9bfd41e276e16b8f7c6808f3d87531fc5be4cdd5
-
-# Display calibration - from retail ACQ160
-vendor/etc/qdcm_calib_data_Livata_video_mode_dsi_panel.xml
-vendor/etc/qdcm_calib_data_Synaptics_video_mode_dsi_panel.xml
 
 # Postprocessing - from FP3 - 6.A.031.2
 vendor/bin/hw/vendor.display.color@1.0-service|815cc36f3722fbfb5fdd52f6678309d207888038
@@ -579,6 +555,7 @@ vendor/lib64/vendor.qti.imsrtpservice@3.0.so;MODULE_SUFFIX=_vendor|460e589128fce
 
 # Sensors
 vendor/bin/sensors.qti
+vendor/etc/sap.conf
 vendor/lib/libsensor1.so
 vendor/lib/libsensor_reg.so
 vendor/lib/sensor_calibrate.so
@@ -590,6 +567,7 @@ vendor/lib64/sensors.ssc.so
 
 # Thermal
 vendor/bin/thermal-engine
+vendor/etc/thermal-engine.conf
 -vendor/lib/libthermalclient.so
 -vendor/lib64/libthermalclient.so
 vendor/lib64/libthermalioctl.so
@@ -634,6 +612,10 @@ vendor/lib/lib-dplmedia.so;DISABLE_DEPS
 vendor/lib64/lib-dplmedia.so;DISABLE_DEPS
 vendor/lib/libevent_observer.so
 vendor/lib64/libevent_observer.so
+vendor/lib/libsdmutils.so
+vendor/lib64/libsdmutils.so
+
 #->_vendor
 vendor/lib64/vendor.qti.hardware.qteeconnector@1.0.so
 vendor/lib/vendor.qti.hardware.qteeconnector@1.0.so
+

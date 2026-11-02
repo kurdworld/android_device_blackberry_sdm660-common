@@ -9,8 +9,6 @@
 
 # Fingerprint
 /dev/goodix_fp                                                u:object_r:gx_fpd_device:s0
-/data/goodix(/.*)?                                            u:object_r:gx_fpd_data_file:s0
-/data/system/fingerprint(/.*)?                                u:object_r:gx_fpd_data_file:s0
 /(vendor|system/vendor)/bin/gx_fpd                            u:object_r:gx_fpd_exec:s0
 
 # MAC Loader
@@ -19,15 +17,50 @@
 # NFC
 /(vendor|system/vendor)/bin/hw/android.hardware.nfc-service.nxp         u:object_r:hal_nfc_default_exec:s0
 
+# Thermal HAL
+/(vendor|system/vendor)/bin/hw/android\.hardware\.thermal-service\.qti   u:object_r:hal_thermal_default_exec:s0
+
 # Lights service
 /(vendor|system/vendor)/bin/hw/android.hardware.lights-service.blackberry                   u:object_r:hal_light_default_exec:s0
 
 # Touch (GloveMode) service
-/(vendor|system/vendor)/bin/hw/vendor.lineage.touch@1.0-service.blackberry      u:object_r:hal_lineage_touch_default_exec:s0
+/(vendor|system/vendor)/bin/hw/vendor.lineage.touch-service.blackberry      u:object_r:hal_lineage_touch_default_exec:s0
+
+# TouchKeypad service
+/(vendor|system/vendor)/bin/hw/vendor.blackberry.touchkeypad-service            u:object_r:hal_touchkeypad_exec:s0
+
+# Gatekeeper software fallback (needed alongside QTI gatekeeper for enforcing)
+/(vendor|system/vendor)/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software   u:object_r:hal_gatekeeper_default_exec:s0
 
 # Partitions (Non-A/B)
-/dev/block/platform/soc/c0c4000\.sdhci/by-name/storesec                        u:object_r:boot_block_device:s0
-/dev/block/mmcblk0p2                                                            u:object_r:traceability_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/boot                            u:object_r:boot_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/cache                           u:object_r:cache_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/frp                             u:object_r:frp_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/fs[cg]                          u:object_r:vendor_modem_efs_partition_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/logdump                         u:object_r:vendor_logdump_partition:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/metadata                        u:object_r:metadata_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/misc                            u:object_r:misc_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/modemst[12]                     u:object_r:vendor_modem_efs_partition_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/persist                         u:object_r:vendor_persist_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/recovery                        u:object_r:recovery_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/ssd                             u:object_r:vendor_ssd_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/storsec                         u:object_r:boot_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/system                          u:object_r:system_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/userdata                        u:object_r:userdata_block_device:s0
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/vendor                          u:object_r:system_block_device:s0
+
+# ION: Android 17 dropped the platform label, the 4.19 kernel still uses it
+/dev/ion                                                                       u:object_r:ion_device:s0
+
+# Gralloc is loaded into every process that draws
+/(vendor|system/vendor)/lib(64)?/hw/gralloc\.sdm660\.so                        u:object_r:same_process_hal_file:s0
+
+# Waits for qseecomd listeners during post-fs
+/(vendor|system/vendor)/bin/init\.qti\.qseecomd\.sh                            u:object_r:vendor_qti_init_shell_exec:s0
+
+# Traceability partition (factory-programmed hwkey/keyboard-language config;
+# read by trace_util from qti_init_shell at boot)
+/dev/block/platform/soc/c0c4000\.sdhci/by-name/traceability                    u:object_r:traceability_block_device:s0
 
 # tombstones
 /data/vendor/tombstones/rfs(/.*)?      u:object_r:rfs_tombstone_data_file:s0
@@ -35,9 +68,13 @@
 # FocalTech NavKeys
 /sys/board_properties/virtualkeys\.fts_input_device_B    u:object_r:sysfs_virtualkeys:s0
 
+# Loggy boot logging
+/(vendor|system/vendor)/bin/loggy\.sh   u:object_r:vendor_qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/loggy2\.sh  u:object_r:vendor_qti_init_shell_exec:s0
+
 # Keyboard layout detection
-/(vendor|system/vendor)/bin/init\.keypad\.sh                                    u:object_r:qti_init_shell_exec:s0
-/(vendor|system/vendor)/bin/trace_util                                          u:object_r:qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.keypad\.sh                                    u:object_r:vendor_qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/trace_util                                          u:object_r:vendor_qti_init_shell_exec:s0
 
 # Widevine
-/(vendor|system/vendor)/bin/hw/android.hardware.drm@1.0-service.widevine        u:object_r:hal_drm_widevine_exec:s0
+/(vendor|system/vendor)/bin/hw/android.hardware.drm@1.0-service.widevine        u:object_r:vendor_hal_drm_widevine_exec:s0

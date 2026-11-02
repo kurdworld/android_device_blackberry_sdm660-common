@@ -1,0 +1,2 @@
+allow vendor_time_daemon self:capability { setgid setuid };
+allow vendor_time_daemon mnt_vendor_file:lnk_file read;

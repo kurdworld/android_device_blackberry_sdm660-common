@@ -4,14 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-from pathlib import Path
-from runpy import run_path
-
-# Also works when this module is loaded by the Athena/Luna extractor.
-fixup_iwlan_network_list = run_path(
-    str(Path(__file__).with_name('key2_iwlan_patch.py'))
-)["fixup_iwlan_network_list"]
-
 from extract_utils.fixups_blob import (
     blob_fixup,
     blob_fixups_user_type,
@@ -35,7 +27,6 @@ namespace_imports = [
     'hardware/qcom-caf/wlan',
     'vendor/qcom/opensource/dataservices',
     'vendor/qcom/opensource/data-ipa-cfg-mgr-legacy-um',
-    'vendor/qcom/opensource/display',
 ]
 
 def lib_fixup_vendor_suffix(lib: str, partition: str, *args, **kwargs):
@@ -63,9 +54,8 @@ blob_fixups: blob_fixups_user_type = {
      'vendor/bin/hw/android.hardware.drm@1.0-service.widevine'
      ): blob_fixup()
         .add_needed('libbase_shim.so'),
-    # Filter UNKNOWN entries without discarding a later valid IWLAN network.
-    'vendor/lib64/libril-qc-hal-qmi.so': blob_fixup()
-        .call(fixup_iwlan_network_list, need_tmp_dir=False),
+    #'vendor/lib64/libril-qc-hal-qmi.so': blob_fixup()
+    #    .replace_needed('android.hardware.radio.config@1.0.so', 'android.hardware.radio.c_shim@1.0.so'),
     'system_ext/lib64/lib-imscamera.so': blob_fixup()
         .add_needed('libgui_shim.so'),
     'system_ext/lib64/lib-imsvideocodec.so': blob_fixup()

@@ -1,1 +1,5 @@
 allow ueventd self:capability sys_nice;
+
+# wlan_mac.bin firmware is a symlink to the MAC written by macloader
+allow ueventd wifi_data_file:dir search;
+allow ueventd wifi_data_file:file r_file_perms;

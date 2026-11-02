@@ -126,7 +126,6 @@ static void v4_to_v1(int *data, int numInts) {
 /* --- native_handle_clone interception --- */
 
 static native_handle_t* (*real_native_handle_clone)(const native_handle_t *) = NULL;
-static int clone_hook_logged = 0;
 
 native_handle_t* native_handle_clone(const native_handle_t *handle) {
     if (!real_native_handle_clone)

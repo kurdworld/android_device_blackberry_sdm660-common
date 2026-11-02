@@ -1,10 +1,50 @@
+# Battery and charger
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qpnp,fg/power_supply        u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/soc/c176000.i2c/i2c-2/2-001d/power_supply                                                         u:object_r:sysfs_batteryinfo:s0
+
+# Camera
+genfscon sysfs /devices/platform/soc/ca00000.qcom,msm-cam          u:object_r:vendor_sysfs_camera:s0
+genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci              u:object_r:vendor_sysfs_camera:s0
+genfscon sysfs /devices/platform/soc/caa0000.qcom,jpeg             u:object_r:vendor_sysfs_camera:s0
+
+# Wakeup statistics under the charger, battery and camera devices
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply/battery/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply/dc/wakeup      u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply/main/wakeup    u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply/pc_port/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/power_supply/usb/wakeup     u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qpnp,fg/power_supply/bms/wakeup            u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/c176000.i2c/i2c-2/2-001d/power_supply/parallel/wakeup                                                       u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@0/video4linux/video3/wakeup                                   u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@1/video4linux/video5/wakeup                                   u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@2/video4linux/video4/wakeup                                   u:object_r:sysfs_wakeup:s0
+
+# Devfreq
+genfscon sysfs /devices/platform/soc/soc:qcom,cpu-cpu-ddr-bw/devfreq        u:object_r:vendor_sysfs_devfreq:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,cpu0-cpu-ddr-lat/devfreq      u:object_r:vendor_sysfs_devfreq:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,cpu0-cpu-ddr-latfloor/devfreq u:object_r:vendor_sysfs_devfreq:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,cpu4-cpu-ddr-lat/devfreq      u:object_r:vendor_sysfs_devfreq:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,cpu4-cpu-ddr-latfloor/devfreq u:object_r:vendor_sysfs_devfreq:s0
+
 # Extcon
-genfscon sysfs /devices/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/extcon	u:object_r:sysfs_extcon:s0
-genfscon sysfs /devices/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,usb-pdphy@1700/extcon u:object_r:sysfs_extcon:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,qpnp-smb2/extcon       u:object_r:sysfs_extcon:s0
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-00/800f000.qcom,spmi:qcom,pm660@0:qcom,usb-pdphy@1700/extcon u:object_r:sysfs_extcon:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,mdss_wb_panel/extcon u:object_r:sysfs_extcon:s0
+# athena-genfs-dup-removed: genfscon sysfs /devices/platform/soc/soc:qcom,msm-ext-disp/extcon u:object_r:sysfs_extcon:s0
+
+# Notification LED
+genfscon sysfs /devices/platform/soc/800f000.qcom,spmi/spmi-0/spmi0-03/800f000.qcom,spmi:qcom,pm660l@3:qcom,leds@d000/leds u:object_r:sysfs_leds:s0
+
+# Subsystem state (read by libmdmdetect in the modem, IMS and data services)
+genfscon sysfs /devices/platform/soc/4080000.qcom,mss/subsys0      u:object_r:vendor_sysfs_ssr:s0
+genfscon sysfs /devices/platform/soc/cce0000.qcom,venus/subsys1    u:object_r:vendor_sysfs_ssr:s0
+genfscon sysfs /devices/platform/soc/15700000.qcom,lpass/subsys2   u:object_r:vendor_sysfs_ssr:s0
+genfscon sysfs /devices/platform/soc/1a300000.qcom,turing/subsys3  u:object_r:vendor_sysfs_ssr:s0
+genfscon sysfs /devices/platform/soc/soc:qcom,kgsl-hyp/subsys4     u:object_r:vendor_sysfs_ssr:s0
 
 # DT2W
 genfscon sysfs /devices/virtual/tp_device/tp_gesture/gesture_enable                          u:object_r:sysfs_touch_wake_gesture:s0
-genfscon sysfs /devices/virtual/tp_device/tp_gesture/host_dt2w_enable                        u:object_r:sysfs_touch_wake_gesture:s0
 
 # Glove Mode
 genfscon sysfs /devices/virtual/tp_device/tp_glove/glove_enable                              u:object_r:sysfs_touch_glove_mode:s0
@@ -16,17 +56,5 @@ genfscon sysfs /devices/platform/soc/c175000.i2c/i2c-1/1-0030/leds/button-backli
 # Touch nav buttons
 genfscon sysfs /devices/virtual/tp_device/tp_button/button_enable                           u:object_r:sysfs_touch_nav_buttons:s0
 
-# Touch keypad
-genfscon sysfs /devices/soc/c175000.i2c/i2c-1/1-0020/input/input1 u:object_r:sysfs_touch_keypad:s0
-
-# Wakeup-source statistics read by system_suspend. Label stable parent
-# directories so dynamically allocated wakeupN names inherit sysfs_wakeup.
-genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@0/video4linux/video3/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@1/video4linux/video4/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@1/video4linux/video5/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@2/video4linux/video4/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/ca0c000.qcom,cci/ca0c000.qcom,cci:qcom,camera@2/video4linux/video5/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/c175000.i2c/i2c-1/1-0020/synaptics_dsx.0/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/c175000.i2c/i2c-1/1-0040/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/c178000.i2c/i2c-4/4-0038/wakeup u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/soc/0.goodix_gf3206/wakeup u:object_r:sysfs_wakeup:s0
+# Touch keypad (4.19 puts i2c devices under /devices/platform/soc/)
+genfscon sysfs /devices/platform/soc/c175000.i2c/i2c-1/1-0020/input u:object_r:sysfs_touch_keypad:s0

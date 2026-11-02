@@ -206,6 +206,18 @@
         <item>30</item>
     </integer-array>
 
+    <!-- Use fourteen ring volume steps -->
+    <integer name="config_audio_ring_vol_steps">14</integer>
+
+    <!-- Use fourteen notification volume steps -->
+    <integer name="config_audio_notif_vol_steps">14</integer>
+
+    <!-- The built-in keyboard has its own Alt/Sym symbol layers: keep them -->
+    <bool name="config_builtInKeyboardKeepsOwnCharacterMap">true</bool>
+
+    <!-- The back/home/switch buttons are touch panel virtual keys: always vibrate for them -->
+    <bool name="config_hardVirtualKeyAlwaysHaptic">true</bool>
+
     <!-- Vibrator pattern for a very short but reliable vibration for soft keyboard tap -->
     <integer-array name="config_keyboardTapVibePattern">
         <item>40</item>
@@ -222,8 +234,4 @@
         <item>com.google.android.gms/com.google.android.gms.nearby.messages.service.NearbyMessagesService</item>
         <item>com.google.android.gms/com.google.android.gms.nearby.discovery.service.DiscoveryService</item>
     </string-array>
-
-    <string name="config_wlan_data_service_package" translatable="false">vendor.qti.iwlan</string>
-    <string name="config_wlan_network_service_package" translatable="false">vendor.qti.iwlan</string>
-    <string name="config_qualified_networks_service_package" translatable="false">vendor.qti.iwlan</string>
 </resources>

@@ -35,3 +35,11 @@ cc_library_shared {
     compile_multilib: "32",
     vendor: true,
 }
+
+// Stock vendor libstdc++ replacement (fingerprint and camera blobs)
+cc_library_shared {
+    name: "libstdc++_vendor",
+    srcs: ["libstdc++_vendor.cpp"],
+    shared_libs: ["libc++"],
+    vendor: true,
+}
