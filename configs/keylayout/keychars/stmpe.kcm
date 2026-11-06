@@ -178,20 +178,21 @@ key X {
     sym:                                '\u20AC'
 }
 
-key C {
-    label:                              'C'
-    base:                               'c'
-    shift, capslock:                    'C'
-    alt, lalt:                          '9'
-    sym:                                '\u00A3'
+key Y {
+    label:                              'Z'
+    base:                               'z'
+    shift, capslock:                    'Z'
+    alt, lalt:                          ')'
+    sym:                                ']'
 }
 
-key V {
-    label:                              'V'
-    base:                               'v'
-    shift, capslock:                    'V'
-    alt, lalt:                          '?'
-    sym:                                '\u00BF'
+key Z {
+    label:                              'Y'
+    base:                               'y'
+    shift, capslock:                    'Y'
+    alt, lalt:                          '7'
+    sym:                                '\u00A5'
+}
 }
 
 key B {
