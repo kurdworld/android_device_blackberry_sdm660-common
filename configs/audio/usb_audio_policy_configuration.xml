@@ -13,7 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<!-- USB Audio HAL Audio Policy Configuration file -->
+<!-- USB Audio HAL Audio Policy Configuration file
+
+     Only USB accessories (AUDIO_DEVICE_OUT_USB_ACCESSORY) are handled by the
+     generic AOSP USB HAL. USB headsets and USB DACs are routed by the primary
+     QCOM HAL through its AFE USB_AUDIO_RX/USB_AUDIO_TX backends, like every
+     other QCOM audio policy configuration. Declaring them here as well would
+     give two HALs the same device and the in-call voice stream could be sent
+     to the module that cannot bridge Telephony Rx.
+-->
 
 <module name="usb" halVersion="2.0">
     <mixPorts>
@@ -21,27 +29,15 @@
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                      samplingRates="44100" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
         </mixPort>
-        <mixPort name="usb_device output" role="source"/>
-        <mixPort name="usb_device input" role="sink"/>
     </mixPorts>
     <devicePorts>
         <devicePort tagName="USB Host Out" type="AUDIO_DEVICE_OUT_USB_ACCESSORY" role="sink">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                      samplingRates="44100" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
         </devicePort>
-        <devicePort tagName="USB Device Out" type="AUDIO_DEVICE_OUT_USB_DEVICE" role="sink"/>
-        <devicePort tagName="USB Headset Out" type="AUDIO_DEVICE_OUT_USB_HEADSET" role="sink"/>
-        <devicePort tagName="USB Device In" type="AUDIO_DEVICE_IN_USB_DEVICE" role="source"/>
-        <devicePort tagName="USB Headset In" type="AUDIO_DEVICE_IN_USB_HEADSET" role="source"/>
     </devicePorts>
     <routes>
         <route type="mix" sink="USB Host Out"
                sources="usb_accessory output"/>
-        <route type="mix" sink="USB Device Out"
-               sources="usb_device output"/>
-        <route type="mix" sink="USB Headset Out"
-               sources="usb_device output"/>
-        <route type="mix" sink="usb_device input"
-               sources="USB Device In,USB Headset In"/>
     </routes>
 </module>

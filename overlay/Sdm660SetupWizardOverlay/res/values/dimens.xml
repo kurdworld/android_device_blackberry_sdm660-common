@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!--
+        The KEY2's screen is only 411dp wide. The stock 48sp welcome title wraps over several
+        lines and reads as oversized, so use a size that still fits the GLIF expressive layout.
+    -->
+    <dimen name="welcome_title_text_size">36sp</dimen>
+    <dimen name="welcome_title_line_height">44dp</dimen>
+</resources>

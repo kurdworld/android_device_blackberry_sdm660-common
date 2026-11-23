@@ -138,7 +138,6 @@ int read_mac(const char* path, const char magic[],
     }
 
     std::vector<char> window(magic_len);
-    size_t pos = 0;
 
     if (!in_bt.read(window.data(), magic_len))
         return -1;

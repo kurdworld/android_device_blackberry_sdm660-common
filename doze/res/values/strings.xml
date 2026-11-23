@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doze_settings_help_title">Doze settings</string>
+    <string name="doze_settings_help_text">Configure ambient display and gesture settings.</string>
+</resources>

@@ -32,6 +32,54 @@ on early-init
     mkdir /bt_firmware 0771 system system
     mkdir /dsp 0771 media media
 
+    # Keep both CPU clusters at their maximum frequency for the whole boot.
+    # Nearly all of the boot work is single-threaded (init, zygote,
+    # system_server, SystemUI) and schedutil leaves those threads at low
+    # frequency while it ramps, which stretches the boot animation. Both
+    # clusters are dropped back to schedutil once boot has completed.
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor performance
+
+    # mq-deadline keeps eMMC latency down while the large sequential boot
+    # reads are mixed with small synchronous reads from init, vold and
+    # PackageManager.
+    write /sys/block/mmcblk0/queue/scheduler mq-deadline
+
+    # Boot is dominated by large sequential reads (boot image, APK scan), so
+    # use a larger read-ahead until boot completes; post_boot.sh drops it back
+    # to the 128KB latency tuning used for the UI.
+    write /sys/block/mmcblk0/queue/read_ahead_kb 512
+    write /sys/block/mmcblk0/bdi/read_ahead_kb 512
+
+on late-init
+    # The debuggable console shell is not needed while booting.
+    stop console
+
+on property:sys.boot_completed=1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor schedutil
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor schedutil
+
+# ueventd is started from "on early-init", while init is still in the bootstrap
+# mount namespace, and its coldboot may finish after early services have already
+# tried to open their nodes. Create the device nodes from sysfs ourselves before
+# anything starts. Run in the permissive "su" domain so mknod is
+# not blocked by SELinux. This blocks the boot action, so keep the script cheap;
+# by the time "boot" runs ueventd has already created everything it needs.
+on post-fs-data
+    exec u:r:su:s0 -- /vendor/bin/init.devnodes.sh
+
+# The stock keymaster@3.0 QTI service loads its passthrough implementation from
+# android.hardware.keymaster@3.0-impl.so, which this vendor image does not ship
+# (only the legacy -impl-qti hw_module wrapped by the 4.0 service), so it exits
+# immediately and init restarts it every ~5 s for the whole uptime. keystore2
+# only talks to the 4.0 service, so keep the leftover disabled.
+service keymaster-3-0 /vendor/bin/hw/android.hardware.keymaster@3.0-service-qti
+    class early_hal
+    user system
+    group system drmrpc
+    override
+    disabled
+
 on init
     write /dev/stune/foreground/schedtune.sched_boost_no_override 1
     write /dev/stune/top-app/schedtune.sched_boost_no_override 1

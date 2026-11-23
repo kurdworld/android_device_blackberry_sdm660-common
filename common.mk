@@ -125,23 +125,33 @@ PRODUCT_PACKAGES += \
     android.hardware.bluetooth.audio@2.0-impl \
     vendor.qti.hardware.btconfigstore@1.0.vendor
 
+# AOSP Software Keymaster 4.0 + Gatekeeper (supports FBE v2)
+PRODUCT_PACKAGES += \
+    android.hardware.keymaster@4.0-service \
+    android.hardware.gatekeeper@1.0-service.software \
+    android.hardware.keymaster@4.0.vendor \
+    android.hardware.gatekeeper@1.0.vendor
+
 # Camera
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
     android.hardware.camera.provider@2.4-service \
     libcameracompat
 
+# The 32-bit camera.sdm660.so blob links against this interface, so the vendor
+# library has to be installed or the provider fails to load the HAL and reports
+# zero cameras.
+PRODUCT_PACKAGES += \
+    android.frameworks.displayservice@1.0.vendor:32
+
 PRODUCT_COPY_FILES += \
     $(COMMON_PATH)/camera/libcameracompat/init.cameracompat.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cameracompat.rc
 
 # Configstore
-PRODUCT_PACKAGES += \
-    disable_configstore
 
 # Display
 PRODUCT_PACKAGES += \
-    android.frameworks.displayservice@1.0.vendor \
-    android.hardware.graphics.allocator@2.0-impl:64 \
+    android.hardware.graphics.allocator@2.0-impl \
     android.hardware.graphics.allocator@2.0-service \
     android.hardware.graphics.composer@2.1-service \
     android.hardware.graphics.mapper@2.0-impl \
@@ -189,11 +199,11 @@ PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*,$(COMMON_PATH)/configs/keylayout/keylayout/,$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/) \
     $(call find-copy-subdir-files,*,$(COMMON_PATH)/configs/keylayout/idc,$(TARGET_COPY_OUT_VENDOR)/usr/idc/)
 
-# FM radio - Qualcomm
-PRODUCT_PACKAGES += \
-    FM2 \
-    qcom.fmradio \
-    RevampedFMRadio
+# FM radio - Qualcomm (removed per user request)
+# PRODUCT_PACKAGES += \
+#     FM2 \
+#     qcom.fmradio
+# RevampedFMRadio
 
 # Framework Detect
 PRODUCT_PACKAGES += \
@@ -270,6 +280,10 @@ PRODUCT_PACKAGES += \
 
 $(call soong_config_set,livedisplay_sdm,enable_dm,false)
 
+# Legacy ION implementation for sdm660 kernel 4.19: the default libion is a
+# stub, so gralloc and Adreno cannot open /dev/ion and SurfaceFlinger aborts.
+$(call soong_config_set_bool,libion,legacy_impl,true)
+
 # Media
 
 # Only copy the common media profiles if a device tree hasn't overridden it (separate profile for luna is needed)
@@ -302,6 +316,7 @@ PRODUCT_PACKAGES += \
     Sdm660SystemUIOverlay \
     Sdm660SettingsOverlay \
     Sdm660SettingsProviderOverlay \
+    Sdm660SetupWizardOverlay \
     Sdm660TelephonyOverlay \
     Sdm660TetheringOverlay \
     Sdm660WifiOverlayOverlay
@@ -352,7 +367,8 @@ PRODUCT_COPY_FILES += \
 
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power-service.lineage-libperfmgr
+    android.hardware.power-service.lineage-libperfmgr \
+    libperfmgr
 
 # RCS
 PRODUCT_PACKAGES += \
@@ -371,6 +387,11 @@ PRODUCT_COPY_FILES += \
     $(COMMON_PATH)/configs/qti_whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/qti_whitelist.xml \
 
 # Ramdisk
+# First-stage init needs a copy of the fstab in the boot ramdisk; without it
+# libfstab cannot find /system or /vendor and PID 1 exits before /system/bin/init.
+PRODUCT_COPY_FILES += \
+    $(COMMON_PATH)/init/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
+
 PRODUCT_PACKAGES += \
     fstab.qcom \
     init.blackberry.rc \
@@ -382,13 +403,14 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     init.class_main.sh \
+    init.devnodes.sh \
     init.keypad.sh \
     init.qcom.early_boot.sh \
     init.qcom.post_boot.sh \
     init.qcom.sensors.sh \
     init.qcom.sh \
     init.qcom.usb.sh \
-    loggy.sh \
+    init.qti.qseecomd.sh \
 
 # RenderScript
 PRODUCT_PACKAGES += \
@@ -417,6 +439,7 @@ PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
     hardware/google/interfaces \
     hardware/google/pixel \
+    hardware/google/pixel/power-libperfmgr \
     hardware/lineage/interfaces/power-libperfmgr \
     hardware/qcom-caf/common/libqti-perfd-client \
     vendor/qcom/opensource/usb/etc
@@ -460,10 +483,6 @@ PRODUCT_PACKAGES += \
     libstdc++_vendor
 
 # Touch
-PRODUCT_PACKAGES += \
-    vendor.lineage.touch@1.0-service.blackberry
-
-# Thermal
 PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-impl:64 \
     android.hardware.thermal@1.0-service

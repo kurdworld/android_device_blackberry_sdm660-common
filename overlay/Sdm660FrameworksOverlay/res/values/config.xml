@@ -214,6 +214,9 @@
     <!-- Device-specific haptic effects loaded by VibratorManagerService. -->
     <string name="config_hapticFeedbackCustomizationFile">/product/etc/haptic_feedback_customization.xml</string>
 
+    <!-- The built-in keyboard has its own Alt/Sym symbol layers: keep them -->
+    <bool name="config_builtInKeyboardKeepsOwnCharacterMap">true</bool>
+
     <!-- AOSP WFD -->
     <bool name="config_enableWifiDisplay">true</bool>
 
@@ -224,6 +227,20 @@
     </string-array>
 
     <string name="config_wlan_data_service_package" translatable="false">vendor.qti.iwlan</string>
-    <string name="config_wlan_network_service_package" translatable="false">vendor.qti.iwlan</string>
+    <!--
+         Leave the WLAN network service unset. The vendor IWLAN network service accepts
+         requestNetworkRegistrationInfo() but never calls back, so ServiceStateTracker's poll
+         never finishes and the published ServiceState stays POWER_OFF: mobile data is then
+         never allowed, unless Wi-Fi has brought IWLAN up. IWLAN runs in legacy mode here, so
+         the framework does not need this service; without it the WLAN request completes at
+         once and the poll drains.
+    -->
     <string name="config_qualified_networks_service_package" translatable="false">vendor.qti.iwlan</string>
+
+    <!-- The KEY2 has hardware navigation keys, so there is no home handle for
+         Circle to Search and no assistant entry point. Disable the gesture and
+         the search entry points the framework enables by default. -->
+    <bool name="config_assistLongPressHomeEnabledDefault">false</bool>
+    <bool name="config_assistTouchGestureEnabledDefault">false</bool>
+    <bool name="config_searchAllEntrypointsEnabledDefault">false</bool>
 </resources>

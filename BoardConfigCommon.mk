@@ -104,7 +104,7 @@ BOARD_KERNEL_CMDLINE += androidboot.configfs=true androidboot.usbcontroller=a800
 BOARD_KERNEL_CMDLINE += coherent_pool=1280K regulator_ignore_unused
 # Line below disables serialconsole which should improve performance.
 # Comment it out to re-enable serial console for troubleshooting.
-BOARD_KERNEL_CMDLINE += androidboot.serialconsole=0
+# BOARD_KERNEL_CMDLINE += androidboot.serialconsole=0
 
 # BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 
@@ -116,7 +116,7 @@ BOARD_KERNEL_PAGESIZE    := 4096
 BOARD_KERNEL_IMAGE_NAME  := Image.gz-dtb
 
 TARGET_KERNEL_VERSION := 4.19
-TARGET_KERNEL_SOURCE := kernel/blackberry/sdm660-4p19
+TARGET_KERNEL_SOURCE := kernel/blackberry/sdm660
 TARGET_KERNEL_CLANG_COMPILE := true
 TARGET_KERNEL_NO_GCC := true
 
@@ -139,7 +139,12 @@ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
 TARGET_COPY_OUT_VENDOR := vendor
 TARGET_USES_MKE2FS := true
-BOARD_USES_SYSTEM_OTHER_ODEX := true
+# Keep precompiled app code (odex/vdex) inside system.img. The KEY2 is
+# non-A/B and has no system_other partition, so with this enabled the odex of
+# every app/priv-app (SystemUI, Settings, Launcher, ...) was written to an
+# unflashed system_other.img and those apps ran straight from the APK, which
+# makes boot and cold app starts noticeably slower.
+# BOARD_USES_SYSTEM_OTHER_ODEX := true
 TARGET_COPY_OUT_PRODUCT := system/product
 TARGET_COPY_OUT_VENDOR := vendor
 TARGET_USERIMAGES_USE_EXT4 := true
@@ -155,6 +160,7 @@ ENABLE_VENDOR_RIL_SERVICE := true
 TARGET_USES_OLD_MNC_FORMAT := true
 
 # Root Directories
+BOARD_ROOT_EXTRA_FOLDERS += metadata
 BOARD_ROOT_EXTRA_SYMLINKS := \
     /mnt/vendor/persist:/persist \
     /vendor/bt_firmware:/bt_firmware \

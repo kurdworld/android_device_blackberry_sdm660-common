@@ -1,0 +1,8 @@
+# The 4.19 kernel allocates graphics, camera and media buffers through ION.
+# Android 17 removed the platform rules for it, so restore what AOSP granted
+# before ION was retired.
+#
+# Without this, app processes (SystemUI, Launcher, Settings) and bootanim get
+# EACCES when qdgralloc / the Adreno driver opens /dev/ion, which surfaces as
+# "Failed to create context, error = EGL_NOT_INITIALIZED" and EGL_BAD_SURFACE.
+allow { domain -isolated_app_all } ion_device:chr_file r_file_perms;

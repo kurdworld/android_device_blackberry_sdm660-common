@@ -263,6 +263,13 @@
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                              samplingRates="8000,16000,48000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
                 </devicePort>
+                <!-- USB audio is handled by the primary HAL (AFE USB_AUDIO_TX
+                     backend). The devices must belong to this module so that an
+                     in-call TX patch is not attempted against another module. -->
+                <devicePort tagName="USB Device In" type="AUDIO_DEVICE_IN_USB_DEVICE" role="source">
+                </devicePort>
+                <devicePort tagName="USB Headset In" type="AUDIO_DEVICE_IN_USB_HEADSET" role="source">
+                </devicePort>
 
             </devicePorts>
             <!-- route declaration, i.e. list all available sources for a given sink -->
@@ -275,12 +282,21 @@
                        sources="primary output,deep_buffer,compressed_offload,voip_rx,BT SCO Headset Mic,Telephony Rx"/>
                 <route type="mix" sink="Wired Headphones"
                        sources="primary output,deep_buffer,compressed_offload,voip_rx,BT SCO Headset Mic,Telephony Rx"/>
+                <!-- Without these routes the USB devices are not part of the
+                     primary output profile's supported devices, so the policy
+                     cannot route an in-call voice stream to a USB headset that
+                     is plugged in while the call is already up (the STRATEGY_PHONE
+                     restriction in Engine.cpp drops everything else). -->
+                <route type="mix" sink="USB Device Out"
+                       sources="primary output,deep_buffer,direct_pcm,compressed_offload,compress_passthrough,voip_rx"/>
+                <route type="mix" sink="USB Headset Out"
+                       sources="primary output,deep_buffer,direct_pcm,compressed_offload,compress_passthrough,voip_rx"/>
                 <route type="mix" sink="HDMI"
                        sources="primary output,deep_buffer,direct_pcm,compressed_offload,compress_passthrough"/>
                 <route type="mix" sink="Telephony Tx"
                        sources="voice_tx"/>
                 <route type="mix" sink="primary input"
-                       sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,FM Tuner"/>
+                       sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,FM Tuner,USB Device In,USB Headset In"/>
                 <route type="mix" sink="voice_rx"
                        sources="Telephony Rx"/>
                 <route type="mix" sink="BT SCO"

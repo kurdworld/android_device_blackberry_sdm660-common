@@ -122,19 +122,29 @@ void Lights::setLightLocked(const HwLightState& state) {
         case FlashMode::HARDWARE:
         case FlashMode::TIMED:
             if (blink) {
-                /* Push framework-supplied timing to kernel before enabling
-                 * breath. The qti-tri-led driver translates delay_on/off (ms)
-                 * into a smooth-fade ramp step, replacing the DT default. */
+                /* Program the strength first: the qti-tri-led driver keeps
+                 * this brightness and scales the breath LUT with it. Then
+                 * push the framework-supplied timing; the driver translates
+                 * delay_on/off (ms) into a ramp step and on/off pause counts,
+                 * replacing the DT default. */
                 if (mWhiteLed) {
+                    setLedBrightness(mLedUseRedAsWhite ? RED : WHITE,
+                                     RgbaToBrightness(state.color));
                     setLedDelay(mLedUseRedAsWhite ? RED : WHITE,
                                 state.flashOnMs, state.flashOffMs);
                 } else {
-                    if (!!red)
+                    if (!!red) {
+                        setLedBrightness(RED, red);
                         setLedDelay(RED, state.flashOnMs, state.flashOffMs);
-                    if (!!green)
+                    }
+                    if (!!green) {
+                        setLedBrightness(GREEN, green);
                         setLedDelay(GREEN, state.flashOnMs, state.flashOffMs);
-                    if (!!blue)
+                    }
+                    if (!!blue) {
+                        setLedBrightness(BLUE, blue);
                         setLedDelay(BLUE, state.flashOnMs, state.flashOffMs);
+                    }
                 }
             }
             if (mWhiteLed) {

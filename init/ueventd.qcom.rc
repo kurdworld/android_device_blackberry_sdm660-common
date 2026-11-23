@@ -30,6 +30,15 @@
 # be added to search path for firmware loading
 firmware_directories /vendor/firmware_mnt/image/
 
+# ueventd coldboot spends almost all of its time labelling /sys: a recursive
+# restorecon of the ~63k sysfs attributes takes ~1.8 s on this SoC, and init
+# blocks every action (post-fs-data, zygote-start, boot) until coldboot
+# finishes. With parallel_restorecon enabled the subdirectory restorecons are
+# distributed over the uevent handler subprocesses instead of being done by
+# ueventd's main thread alone, which cuts that wait to a few hundred ms.
+# The default directory set (/sys, /sys/devices) is what we want.
+parallel_restorecon enabled
+
 # the DIAG device node is not world writable/readable.
 /dev/diag                 0660   system     oem_2901
 

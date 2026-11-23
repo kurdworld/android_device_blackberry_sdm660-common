@@ -41,3 +41,11 @@
 
 # Widevine
 /(vendor|system/vendor)/bin/hw/android.hardware.drm@1.0-service.widevine        u:object_r:hal_drm_widevine_exec:s0
+
+# Gatekeeper software fallback (needed alongside QTI gatekeeper for enforcing)
+/(vendor|system/vendor)/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software   u:object_r:hal_gatekeeper_default_exec:s0
+
+# ION is deprecated on recent platforms and no longer labeled by the platform
+# file_contexts, so /dev/ion would fall back to the generic "device" type and
+# surfaceflinger (qdgralloc) would be denied. Restore the legacy label.
+/dev/ion                                                               u:object_r:ion_device:s0

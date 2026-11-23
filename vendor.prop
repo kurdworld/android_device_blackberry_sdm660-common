@@ -202,7 +202,6 @@ vendor.vidc.enc.disable.pq=true
 # Miscellaneous
 persist.sys.bbsys=on
 persist.vendor.qcomsysd.enabled=0
-ro.cp_system_other_odex=1
 sys.vendor.shutdown.waittime=500
 vendor.mm.enable.qcom_parser=13631487
 #property for vendor specific library

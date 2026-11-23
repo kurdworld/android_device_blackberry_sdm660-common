@@ -71,6 +71,12 @@ sh_binary {
 }
 
 sh_binary {
+    name: "init.devnodes.sh",
+    src: "init.devnodes.sh",
+    soc_specific: true,
+}
+
+sh_binary {
     name: "init.keypad.sh",
     src: "init.keypad.sh",
     soc_specific: true,
@@ -101,7 +107,7 @@ sh_binary {
 }
 
 sh_binary {
-    name: "loggy.sh",
-    src: "loggy.sh",
-    vendor: true,
+    name: "init.qti.qseecomd.sh",
+    src: "init.qti.qseecomd.sh",
+    soc_specific: true,
 }

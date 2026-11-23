@@ -29,21 +29,24 @@
 
 export PATH=/vendor/bin
 
-# Set platform variables
+# Set platform variables.
+# This script runs as a blocking "exec" in the early-boot action, so every
+# fork+exec costs ~17 ms here. Read sysfs with the shell builtin instead of
+# spawning cat.
 if [ -f /sys/devices/soc0/hw_platform ]; then
-    soc_hwplatform=`cat /sys/devices/soc0/hw_platform` 2> /dev/null
+    read soc_hwplatform < /sys/devices/soc0/hw_platform 2> /dev/null
 else
-    soc_hwplatform=`cat /sys/devices/system/soc/soc0/hw_platform` 2> /dev/null
+    read soc_hwplatform < /sys/devices/system/soc/soc0/hw_platform 2> /dev/null
 fi
 if [ -f /sys/devices/soc0/soc_id ]; then
-    soc_hwid=`cat /sys/devices/soc0/soc_id` 2> /dev/null
+    read soc_hwid < /sys/devices/soc0/soc_id 2> /dev/null
 else
-    soc_hwid=`cat /sys/devices/system/soc/soc0/id` 2> /dev/null
+    read soc_hwid < /sys/devices/system/soc/soc0/id 2> /dev/null
 fi
 if [ -f /sys/devices/soc0/platform_version ]; then
-    soc_hwver=`cat /sys/devices/soc0/platform_version` 2> /dev/null
+    read soc_hwver < /sys/devices/soc0/platform_version 2> /dev/null
 else
-    soc_hwver=`cat /sys/devices/system/soc/soc0/platform_version` 2> /dev/null
+    read soc_hwver < /sys/devices/system/soc/soc0/platform_version 2> /dev/null
 fi
 
 if [ -f /sys/class/drm/card0-DSI-1/modes ]; then
@@ -54,18 +57,14 @@ if [ -f /sys/class/drm/card0-DSI-1/modes ]; then
         break;
     done < $mode_file
 elif [ -f /sys/class/graphics/fb0/virtual_size ]; then
-    res=`cat /sys/class/graphics/fb0/virtual_size` 2> /dev/null
+    read res < /sys/class/graphics/fb0/virtual_size 2> /dev/null
     fb_width=${res%,*}
 fi
-
-log -t BOOT -p i "MSM target '$1', SoC '$soc_hwplatform', HwID '$soc_hwid', SoC ver '$soc_hwver'"
 
 #For drm based display driver
 vbfile=/sys/module/drm/parameters/vblankoffdelay
 if [ -w $vbfile ]; then
     echo -1 >  $vbfile
-else
-    log -t DRM_BOOT -p w "file: '$vbfile' or perms doesn't exist"
 fi
 
 function set_density_by_fb() {
@@ -348,10 +347,22 @@ esac
 # Loop through the sysfs nodes and determine
 # the HDMI(dtv panel)
 
+PERM_QUEUE=
+
 function set_perms() {
     #Usage set_perms <filename> <ownership> <permission>
-    chown -h $2 $1
-    chmod $3 $1
+    [ -e "$1" ] || return 0
+    # The overwhelming majority of the calls below use the same owner and mode
+    # (system.graphics 0664), and a chown+chmod pair costs ~34 ms in forks.
+    # Queue those and apply them with a single chown -h and a single chmod at
+    # the end of the script; anything else is applied immediately.
+    case "$2:$3" in
+        system.graphics:0664) PERM_QUEUE="$PERM_QUEUE $1" ;;
+        *)
+            chown -h $2 $1
+            chmod $3 $1
+            ;;
+    esac
 }
 
 function setHDMIPermission() {
@@ -390,7 +401,9 @@ then
         file=/sys/class/graphics/fb$fb_cnt/msm_fb_panel_info
         if [ -f "$file" ]
         then
-          cat $file | while read line; do
+          # Redirect instead of piping through cat: a pipeline would run
+          # setHDMIPermission in a subshell and lose the permission queue.
+          while read line; do
             case "$line" in
                 *"is_pluggable"*)
                  case "$line" in
@@ -398,7 +411,7 @@ then
                       setHDMIPermission $fb_cnt
                  esac
             esac
-          done
+          done < $file
         fi
     done
 
@@ -407,13 +420,13 @@ then
     if [ -f "$file" ]
     then
         setprop vendor.gralloc.disable_ubwc 1
-        cat $file | while read line; do
+        while read line; do
           case "$line" in
                     *"ubwc"*)
                     setprop vendor.gralloc.enable_fb_ubwc 1
                     setprop vendor.gralloc.disable_ubwc 0
                 esac
-        done
+        done < $file
     fi
 
     file=/sys/class/graphics/fb0
@@ -442,7 +455,12 @@ else
     set_perms /sys/devices/virtual/hdcp/msm_hdcp/min_level_change system.graphics 0660
 fi
 
-boot_reason=`cat /proc/sys/kernel/boot_reason`
+if [ -n "$PERM_QUEUE" ]; then
+    chown -h system.graphics $PERM_QUEUE
+    chmod 0664 $PERM_QUEUE
+fi
+
+read boot_reason < /proc/sys/kernel/boot_reason
 reboot_reason=`getprop ro.boot.alarmboot`
 if [ "$boot_reason" = "3" ] || [ "$reboot_reason" = "true" ]; then
     setprop ro.alarm_boot true
@@ -452,7 +470,7 @@ fi
 
 # copy GPU frequencies to vendor property
 if [ -f /sys/class/kgsl/kgsl-3d0/gpu_available_frequencies ]; then
-    gpu_freq=`cat /sys/class/kgsl/kgsl-3d0/gpu_available_frequencies` 2> /dev/null
+    read gpu_freq < /sys/class/kgsl/kgsl-3d0/gpu_available_frequencies 2> /dev/null
     setprop vendor.gpu.available_frequencies "$gpu_freq"
 fi
 

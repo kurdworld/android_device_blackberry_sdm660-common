@@ -1,0 +1,16 @@
+# ION is deprecated on recent platforms: the platform file_contexts no longer
+# labels /dev/ion as ion_device, and the platform policy no longer grants
+# surfaceflinger access to it. This device's QTI gralloc still allocates from
+# ION, so qdgralloc (running in the surfaceflinger domain) gets EACCES and
+# surfaceflinger aborts with EGL_BAD_ALLOC.
+#
+# The QTI vendor policy (device/qcom/sepolicy-legacy-um) already grants
+# ion_device access to the other legacy users, so only the graphics and tee
+# domains need to be added here.
+
+allow surfaceflinger ion_device:chr_file rw_file_perms;
+allow hal_graphics_composer_default ion_device:chr_file rw_file_perms;
+allow hal_graphics_allocator_default ion_device:chr_file rw_file_perms;
+allow hal_keymaster_qti ion_device:chr_file rw_file_perms;
+allow hal_gatekeeper_qti ion_device:chr_file rw_file_perms;
+allow tee ion_device:chr_file rw_file_perms;

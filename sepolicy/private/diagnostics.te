@@ -1,0 +1,5 @@
+# BlackBerry settings > Collect logs: the DeviceSettings app starts
+# the collect_diagnostics init service through sys.diagnostics.collect and
+# follows its progress through sys.diagnostics.status.
+system_internal_prop(diagnostics_prop)
+set_prop(platform_app, diagnostics_prop)

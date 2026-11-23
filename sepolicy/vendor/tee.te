@@ -6,5 +6,9 @@ type_transition tee system_data_file:{ dir file } gx_fpd_data_file;
 # allow storing goodix data
 allow tee mnt_vendor_file:dir { search };
 allow tee system_data_file:dir create_dir_perms;
+# qseecomd writes the legacy /data/goodix calibration + template files directly; it needs write on
+# the /data directory and file perms, not just create_dir_perms.
+allow tee system_data_file:dir write;
+allow tee system_data_file:file create_file_perms;
 allow tee { persist_drm_file gx_fpd_data_file fingerprintd_data_file }:dir create_dir_perms;
 allow tee { persist_drm_file gx_fpd_data_file fingerprintd_data_file }:file create_file_perms;

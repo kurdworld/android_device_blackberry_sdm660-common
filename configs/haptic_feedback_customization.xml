@@ -4,13 +4,17 @@
     SPDX-License-Identifier: Apache-2.0
 -->
 <haptic-feedback-constants>
-    <!--
-        BIOMETRIC_CONFIRM
+    <!-- Physical key/button feedback: use the full motor amplitude so short
+         presses still register strongly. -->
+    <constant id="0">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="40" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
 
-        Use the full configured device voltage for 30 ms, matching the
-        legacy vibrator HAL fallback used by the kernel 4.4 builds.
-    -->
-    <constant id="10004">
+    <constant id="1">
         <vibration-effect>
             <waveform-effect>
                 <waveform-entry durationMs="30" amplitude="255"/>
@@ -18,18 +22,74 @@
         </vibration-effect>
     </constant>
 
+    <constant id="3">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="30" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
+    <constant id="6">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="30" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
+    <constant id="16">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="40" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
+    <constant id="17">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="50" amplitude="255"/>
+                <waveform-entry durationMs="70" amplitude="0"/>
+                <waveform-entry durationMs="30" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
+    <!--
+        BIOMETRIC_CONFIRM
+
+        The motor needs a little time to spin up, so use a longer full-strength
+        pulse than the legacy 30 ms fallback. This is also the fallback for the
+        power-button long press.
+    -->
+    <constant id="10003">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="40" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
+    <constant id="10004">
+        <vibration-effect>
+            <waveform-effect>
+                <waveform-entry durationMs="60" amplitude="255"/>
+            </waveform-effect>
+        </vibration-effect>
+    </constant>
+
     <!--
         BIOMETRIC_REJECT
 
-        Match the legacy double-click fallback: 30 ms on, 100 ms off,
-        then 30 ms on.
+        Match the legacy double-click shape, but longer and at full amplitude.
     -->
     <constant id="10005">
         <vibration-effect>
             <waveform-effect>
-                <waveform-entry durationMs="30" amplitude="255"/>
-                <waveform-entry durationMs="100" amplitude="0"/>
-                <waveform-entry durationMs="30" amplitude="255"/>
+                <waveform-entry durationMs="50" amplitude="255"/>
+                <waveform-entry durationMs="80" amplitude="0"/>
+                <waveform-entry durationMs="50" amplitude="255"/>
             </waveform-effect>
         </vibration-effect>
     </constant>

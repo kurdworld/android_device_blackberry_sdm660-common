@@ -78,7 +78,12 @@
 
          For example, a device with notification and battery lights that supports
          pulsating and RGB control would set this config to 75. -->
-    <integer name="config_deviceLightCapabilities">41</integer>
+    <!-- RGB (1) + pulsating (8). Do not advertise HAL adjustable brightness
+         (32): LightsService has no brightness channel for notifications, so
+         lineage-sdk would drop the selected strength instead of applying it to
+         the colour. Without it the SDK scales the RGB value and the HAL can
+         pass the strength to the LED driver. -->
+    <integer name="config_deviceLightCapabilities">9</integer>
 
     <!-- Keyboard backlight control. Possible values are:
             0 - Not supported

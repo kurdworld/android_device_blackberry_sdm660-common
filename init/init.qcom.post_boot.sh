@@ -230,12 +230,17 @@ function configure_zram_parameters() {
     # Read only the faulted page instead of an eight-page cluster.
     echo 0 > /proc/sys/vm/page-cluster
 
-    # Allow a supported custom compressor to override the kernel default.
+    # lz4 is the fastest compressor exposed by this kernel (lzo is the
+    # kernel default and zstd compresses better but costs CPU on every
+    # swap-in). Select it explicitly instead of relying on the default, and
+    # let a supported custom compressor override it.
+    compressor=lz4
     requested=$(getprop persist.vendor.key2.zram.compressor)
     if [ -n "$requested" ] && \
         grep -qw "$requested" /sys/block/zram0/comp_algorithm; then
-            echo "$requested" > /sys/block/zram0/comp_algorithm
+            compressor=$requested
     fi
+    echo "$compressor" > /sys/block/zram0/comp_algorithm
 
     # Zram disk - 75% for Go devices.
     # For 512MB Go device, size = 384MB, set same for Non-Go.
@@ -262,26 +267,21 @@ function configure_zram_parameters() {
 }
 
 function configure_read_ahead_kb_values() {
-    MemTotalStr=`cat /proc/meminfo | grep MemTotal`
-    MemTotal=${MemTotalStr:16:8}
+    # Measured on the KEY2 (6GB): 128KB read-ahead with mq-deadline roughly
+    # halved Settings scroll jank versus 512KB read-ahead with bfq.
+    echo mq-deadline > /sys/block/mmcblk0/queue/scheduler
+    echo 128 > /sys/block/mmcblk0/bdi/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0/queue/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
+    echo 128 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
+    echo 128 > /sys/block/dm-0/queue/read_ahead_kb
+    echo 128 > /sys/block/dm-1/queue/read_ahead_kb
 
-    # Set 128 for <= 3GB &
-    # set 512 for >= 4GB targets.
-    if [ $MemTotal -le 3145728 ]; then
-        echo 128 > /sys/block/mmcblk0/bdi/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0/queue/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
-        echo 128 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
-        echo 128 > /sys/block/dm-0/queue/read_ahead_kb
-        echo 128 > /sys/block/dm-1/queue/read_ahead_kb
-    else
-        echo 512 > /sys/block/mmcblk0/bdi/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0/queue/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
-        echo 512 > /sys/block/mmcblk0rpmb/queue/read_ahead_kb
-        echo 512 > /sys/block/dm-0/queue/read_ahead_kb
-        echo 512 > /sys/block/dm-1/queue/read_ahead_kb
-    fi
+    # dm-crypt reports rotational=1 even though it sits on eMMC. Clear the
+    # flag so the block layer does not apply seek heuristics to flash.
+    for dm in /sys/block/dm-*; do
+        [ -w "$dm/queue/rotational" ] && echo 0 > "$dm/queue/rotational"
+    done
 }
 
 function disable_core_ctl() {
@@ -428,9 +428,18 @@ else
     fi
 
     # Set allocstall_threshold to 0 for all targets.
-    # Set swappiness to 60 for all targets
+    # Prefer zram for anonymous pages so file cache (the launcher, task
+    # snapshots, APK/dex pages) stays resident. CalyxOS uses the same value.
     echo 0 > /sys/module/vmpressure/parameters/allocstall_threshold
-    echo 60 > /proc/sys/vm/swappiness
+    echo 100 > /proc/sys/vm/swappiness
+
+    # Flush dirty pages earlier and in smaller batches. The kernel defaults
+    # (30 s expire, 10% background) let hundreds of MB accumulate before
+    # writeback starts, which turns installs/downloads/photo sync into long
+    # eMMC stalls. These match the values AOSP uses on low-RAM targets.
+    echo 5 > /proc/sys/vm/dirty_background_ratio
+    echo 200 > /proc/sys/vm/dirty_expire_centisecs
+    echo 200 > /proc/sys/vm/dirty_writeback_centisecs
 
     configure_zram_parameters
 
@@ -2408,8 +2417,8 @@ case "$target" in
             # per-policy schedutil nodes shared by Athena and Luna instead.
             policy0=/sys/devices/system/cpu/cpufreq/policy0
             echo "schedutil" > $policy0/scaling_governor
-            echo 1000 > $policy0/schedutil/up_rate_limit_us
-            echo 3000 > $policy0/schedutil/down_rate_limit_us
+            echo 0 > $policy0/schedutil/up_rate_limit_us
+            echo 0 > $policy0/schedutil/down_rate_limit_us
             echo 1401600 > $policy0/schedutil/hispeed_freq
             echo 85 > $policy0/schedutil/hispeed_load
             echo 0 > $policy0/schedutil/pl
@@ -2418,13 +2427,23 @@ case "$target" in
 
             policy4=/sys/devices/system/cpu/cpufreq/policy4
             echo "schedutil" > $policy4/scaling_governor
-            echo 1000 > $policy4/schedutil/up_rate_limit_us
-            echo 3000 > $policy4/schedutil/down_rate_limit_us
+            echo 0 > $policy4/schedutil/up_rate_limit_us
+            echo 0 > $policy4/schedutil/down_rate_limit_us
             echo 1401600 > $policy4/schedutil/hispeed_freq
             echo 85 > $policy4/schedutil/hispeed_load
             echo 0 > $policy4/schedutil/pl
             echo 0 > $policy4/schedutil/rtg_boost_freq
             echo 1113600 > $policy4/scaling_min_freq
+
+            # WALT: rotate heavy tasks onto the big cluster instead of
+            # leaving them queued on the little cluster.
+            echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
+
+            # Input boost: hold the little cluster at 1.4 GHz for 40 ms
+            # after a key press or touch so the recents/QS animation starts
+            # at a usable frequency instead of ramping up from idle.
+            echo "0:1401600" > /sys/devices/system/cpu/cpu_boost/input_boost_freq
+            echo 40 > /sys/devices/system/cpu/cpu_boost/input_boost_ms
 
             # bring all cores online
             echo 1 > /sys/devices/system/cpu/cpu0/online
@@ -2436,19 +2455,21 @@ case "$target" in
             echo 1 > /sys/devices/system/cpu/cpu6/online
             echo 1 > /sys/devices/system/cpu/cpu7/online
 
-            # configure LPM - enable retention for power savings 
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled
-            echo Y > /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled
+            # configure LPM - disable retention. Retention adds 1s+ wake
+            # latency on this SoC, which stalls the first frame after the
+            # screen turns on. CalyxOS uses the same setting.
+            echo N > /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled
+            echo N > /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled
             # enable LPM
             echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled
 
@@ -2457,6 +2478,11 @@ case "$target" in
 
             # Set Memory parameters
             configure_memory_parameters
+
+            # Keep dentries and inodes resident (default is 100) so the
+            # launcher, task snapshots and dex/APK pages stay warm while
+            # anonymous pages are reclaimed to zram. Matches CalyxOS.
+            echo 50 > /proc/sys/vm/vfs_cache_pressure
 
             # Enable bus-dcvs using the kernel 4.19 devfreq node.
             cpubw=/sys/class/devfreq/soc:qcom,cpu-cpu-ddr-bw
